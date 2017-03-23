@@ -1,0 +1,1 @@
+﻿Scaffold-DbContext "Data Source=122.225.47.230,6012;Initial Catalog=Pinhua;Persist Security Info=True;User ID=sa;Password=Benny0922" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Entities\Pinhua
