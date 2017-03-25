@@ -98,5 +98,27 @@ namespace PHDS.core.Utility
                 else
                     rangeRight = rangeRight.AddDays(1);
         }
+
+        public static bool IsRangeOfBegin(this WeixinWorkPlanDetail item)
+        {
+            RangeOfBegin(item, out var left, out var right);
+            return DateTime.Now.IsBetween(left, right);
+        }
+
+        public static bool IsRangeOfEnd(this WeixinWorkPlanDetail item)
+        {
+            RangeOfEnd(item, out var left, out var right);
+            return DateTime.Now.IsBetween(left, right);
+        }
+        public static bool IsRangeOfBorder(this WeixinWorkPlanDetail item)
+        {
+            RangeOfBorder(item, out var left, out var right);
+            return DateTime.Now.IsBetween(left, right);
+        }
+        public static bool IsRangeOfWorkTime(this WeixinWorkPlanDetail item)
+        {
+            RangeOfWorkTime(item, out var left, out var right);
+            return DateTime.Now.IsBetween(left, right);
+        }
     }
 }

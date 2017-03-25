@@ -25,19 +25,19 @@
                 <li><h5>@error</h5></li>
 
             }
-            <li><a class="btn btn-danger btn-sm"><i class="fa fa-angle-double-left"></i> 返回</a></li>
+            <li><a href="javascript:window.history.go(-1);" class="btn btn-danger btn-sm"><i class="fa fa-angle-double-left"></i> 返回</a></li>
         </ul>
     </div>
 }
 else
 {
     <div class="alert alert-success">
-        <div class="text-center" style="margin:25px auto 25px;font-size:70px;vertical-align:middle">
+        <div class="text-center" style="margin:25px auto 25px;font-size:70px;">
             <p><i class="fa fa-check-circle"></i></p>
             <h3>@(memberResult.name)，恭喜您打卡成功！</h3>
             <h4>@(currentWorkTime.Name)，上班打卡</h4>
-            <h4>@DateTime.Now.ToString("HH:mm")</h4>
-            <a class="btn btn-success"><i class="fa fa-angle-double-left"></i> 返回</a>
+            <h4>@DateTime.Now.ToShortTimeString()</h4>
+            <a href="javascript:window.history.go(-1);" class="btn btn-success"><i class="fa fa-angle-double-left"></i> 返回</a>
         </div>
     </div>
 

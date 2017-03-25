@@ -9,7 +9,14 @@
     var currentWorkTime = PinhuaContext.GetCurrentWorkPlanDetail();
     Context.Session.SetString("memberResult", Newtonsoft.Json.JsonConvert.SerializeObject(memberResult));
 }
-<h2>@ViewData["Title"].</h2>
+<div class="row text-center bg-primary" style="font-size:22px;padding:30px 0px 30px 0px">
+    <p><i class="fa fa-clock-o"></i> <span id="current-time"></span></p>
+    <p style="margin-top:20px;">
+        <a asp-action="addbeginclock" class="btn btn-success"><i class="fa fa-arrow-circle-o-up"></i> 上班</a>
+        <a asp-action="addbeginclock" class="btn btn-danger">下班 <i class="fa fa-arrow-circle-o-down"></i></a>
+    </p>
+</div>
+
 <h3>@ViewData["Message"]</h3>
 
 @section Styles{
@@ -19,49 +26,49 @@
         }
     </style>
 }
-
 <div class="alert alert-danger" style="padding:0" role="alert">
     <table id="table1" class="table">
-        <tr><td style="width:100px;">现在时间</td><td id="current-time"></td></tr>
+        <tr><td class="col-xs-4">微信号</td><td>@memberResult.weixinid</td></tr>
+        <tr><td>姓名</td><td>@memberResult.name</td></tr>
+        <tr><td>部门</td><td>@GetMemberDepartments(memberResult.department)</td></tr>
+        <tr>
+            <td class="col-xs-4">公司网络</td>
+            <td>@(isInternalNetwork() ? "是，允许打卡" : "否，禁止打卡")</td>
+        </tr>
         <tr>
             <td>当前班段</td>
             <td>@currentWorkTime?.ToRangeString() @currentWorkTime?.Name</td>
         </tr>
         <tr>
-            <td>上班打卡时间</td>
-            <td>@currentWorkTime?.ToBeginRangeString()</td>
-        </tr>
-        <tr>
-            <td>下班打卡时间</td>
-            <td>@currentWorkTime?.ToEndRangeString()</td>
-        </tr>
-        <tr>
-            <td>边界打卡时间</td>
+            <td>打卡时间</td>
             <td>@currentWorkTime?.ToBorderRangeString()</td>
         </tr>
-        <tr>
-            <td>公司WIFI</td>
-            <td>@(isInternalNetwork() ? "是" : "否")</td>
-        </tr>
+        @*<tr>
+            @if (currentWorkTime == null)
+            {
+                <td colspan="2">非工作时间</td>
+            }
+            else
+            {
+                if (currentWorkTime.IsRangeOfBegin())
+                {
+                    <td colspan="2">可打上班卡</td>
+                }
+                if (currentWorkTime.IsRangeOfEnd())
+                {
+                    <td colspan="2">可打下班卡</td>
+                }
+            }
+        </tr>*@
     </table>
 </div>
 
-<table class="table table-bordered">
-    <tr><td style="width:100px;">微信号</td><td>@memberResult.weixinid</td></tr>
-    <tr><td>内部号</td><td>@memberResult.userid</td></tr>
+@*<table class="table table-bordered">
+    <tr><td class="col-xs-4">微信号</td><td>@memberResult.weixinid</td></tr>
     <tr><td>姓名</td><td>@memberResult.name</td></tr>
     <tr><td>部门</td><td>@GetMemberDepartments(memberResult.department)</td></tr>
-    <tr><td>职位</td><td>@memberResult.position</td></tr>
-    <tr><td>手机</td><td>@memberResult.mobile</td></tr>
-</table>
-<div class="row">
-    <div class="col-xs-12">
-        <p>
-            <a asp-action="AddBeginClock" class="btn btn-primary">上班打卡</a>
-            <a asp-action="AddEndClock" class="btn btn-danger" style="margin-left:15px">下班打卡</a>
-        </p>
-    </div>
-</div>
+</table>*@
+
 @section Scripts{
     <script>
     // 对Date的扩展，将 Date 转化为指定格式的String
@@ -90,7 +97,7 @@
 
     $(document).ready(function () {
         var _timestamp = @DateTime.Now.AsJavascriptsOrUnixTicks();
-        var formatter = 'yyyy年M月d日 hh:mm:ss'
+        var formatter = 'MM/dd hh:mm:ss'
         var now = (new Date(_timestamp)).Format(formatter);
         $('#current-time').text(now);
         setInterval(function () {
