@@ -30,7 +30,7 @@ namespace Senparc.Weixin.MP.Sample.CommonService.QyMessageHandlers
         public override IResponseMessageBase OnTextRequest(RequestMessageText requestMessage)
         {
             var responseMessage = this.CreateResponseMessage<ResponseMessageText>();
-            var code = QY.AdvancedAPIs.OAuth2Api.GetCode("wx87c90793c5376e09", "senderwood.vicp.net/home/oauth", "STATE");
+            var code = QY.AdvancedAPIs.OAuth2Api.GetCode("wx87c90793c5376e09", "wx.pinhuadashi.com/home/oauth", "STATE");
             responseMessage.Content = $"您发送了消息：{requestMessage.Content}，OpenId：{this.WeixinOpenId}，Code：{code}";
             return responseMessage;
         }
@@ -60,7 +60,7 @@ namespace Senparc.Weixin.MP.Sample.CommonService.QyMessageHandlers
         {
             var responseMessage = this.CreateResponseMessage<ResponseMessageText>();
             responseMessage.Content = "这是一条没有找到合适回复信息的默认消息。";
-            return responseMessage;
+            return null;
         }
     }
 }

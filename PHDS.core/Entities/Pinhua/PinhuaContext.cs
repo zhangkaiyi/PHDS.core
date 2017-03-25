@@ -119,6 +119,8 @@ namespace PHDS.core.Entities.Pinhua
         public virtual DbSet<EsWorkFlow> EsWorkFlow { get; set; }
         public virtual DbSet<EsWorkItem> EsWorkItem { get; set; }
         public virtual DbSet<WeixinClock> WeixinClock { get; set; }
+        public virtual DbSet<WeixinClockOptions> WeixinClockOptions { get; set; }
+        public virtual DbSet<WeixinOptions> WeixinOptions { get; set; }
         public virtual DbSet<WeixinWorkPlan> WeixinWorkPlan { get; set; }
         public virtual DbSet<WeixinWorkPlanDetail> WeixinWorkPlanDetail { get; set; }
         public virtual DbSet<业务类型> 业务类型 { get; set; }
@@ -215,11 +217,9 @@ namespace PHDS.core.Entities.Pinhua
         // Unable to generate entity type for table 'dbo.工资项目_主表'. Please see the warning messages.
         // Unable to generate entity type for table 'dbo.工资档案_明细'. Please see the warning messages.
         // Unable to generate entity type for table 'dbo.月考勤汇总_明细'. Please see the warning messages.
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        public PinhuaContext(DbContextOptions<PinhuaContext> options) : base(options)
         {
-            #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-            optionsBuilder.UseSqlServer(@"Data Source=122.225.47.230,6012;Initial Catalog=Pinhua;Persist Security Info=True;User ID=sa;Password=Benny0922");
+
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -4393,6 +4393,74 @@ namespace PHDS.core.Entities.Pinhua
                 entity.Property(e => e.Userid).HasMaxLength(100);
 
                 entity.Property(e => e.Weixinid).HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<WeixinClockOptions>(entity =>
+            {
+                entity.HasIndex(e => new { e.ExcelServerRcid, e.ExcelServerWiid })
+                    .HasName("idx1");
+
+                entity.Property(e => e.ExcelServerChg).HasColumnName("ExcelServerCHG");
+
+                entity.Property(e => e.ExcelServerCn).HasColumnName("ExcelServerCN");
+
+                entity.Property(e => e.ExcelServerRc1)
+                    .HasColumnName("ExcelServerRC1")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.ExcelServerRcid)
+                    .HasColumnName("ExcelServerRCID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.ExcelServerRn).HasColumnName("ExcelServerRN");
+
+                entity.Property(e => e.ExcelServerRtid)
+                    .HasColumnName("ExcelServerRTID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.ExcelServerWiid)
+                    .HasColumnName("ExcelServerWIID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.Ip).HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<WeixinOptions>(entity =>
+            {
+                entity.HasIndex(e => new { e.ExcelServerRcid, e.ExcelServerWiid })
+                    .HasName("idx1");
+
+                entity.Property(e => e.CorpId).HasMaxLength(100);
+
+                entity.Property(e => e.EncodingAeskey)
+                    .HasColumnName("EncodingAESKey")
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.ExcelServerChg).HasColumnName("ExcelServerCHG");
+
+                entity.Property(e => e.ExcelServerCn).HasColumnName("ExcelServerCN");
+
+                entity.Property(e => e.ExcelServerRc1)
+                    .HasColumnName("ExcelServerRC1")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.ExcelServerRcid)
+                    .HasColumnName("ExcelServerRCID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.ExcelServerRn).HasColumnName("ExcelServerRN");
+
+                entity.Property(e => e.ExcelServerRtid)
+                    .HasColumnName("ExcelServerRTID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.ExcelServerWiid)
+                    .HasColumnName("ExcelServerWIID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.Secret).HasMaxLength(100);
+
+                entity.Property(e => e.Token).HasMaxLength(100);
             });
 
             modelBuilder.Entity<WeixinWorkPlan>(entity =>

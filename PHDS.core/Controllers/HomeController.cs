@@ -7,7 +7,8 @@ using Senparc.Weixin.QY.Containers;
 using Senparc.Weixin.QY.CommonAPIs;
 using Senparc.Weixin.QY.AdvancedAPIs;
 using Microsoft.Extensions.Options;
-using PHDS.core.Entities;
+using PHDS.core.Utility;
+using PHDS.core.Entities.Pinhua;
 using Microsoft.AspNetCore.Http;
 using Senparc.Weixin.Exceptions;
 using Newtonsoft.Json;
@@ -16,13 +17,15 @@ namespace PHDS.core.Controllers
 {
     public class HomeController : Controller
     {
-        public IOptions<WeixinOptions> WeixinOptions;
-        public Entities.Pinhua.PinhuaContext PinhuaContext;
+        public WeixinOptions WeixinOptions;
+        public WeixinClockOptions ClockOptions;
+        public PinhuaContext PinhuaContext;
 
-        public HomeController(IOptions<WeixinOptions> weixinOptions, Entities.Pinhua.PinhuaContext pinhuaContext)
+        public HomeController(Entities.Pinhua.PinhuaContext pinhuaContext)
         {
-            this.WeixinOptions = weixinOptions;
             this.PinhuaContext = pinhuaContext;
+            this.WeixinOptions = pinhuaContext.WeixinOptions.FirstOrDefault();
+            this.ClockOptions = pinhuaContext.WeixinClockOptions.FirstOrDefault();
         }
         public IActionResult Index()
         {
@@ -45,7 +48,7 @@ namespace PHDS.core.Controllers
 
         public IActionResult OAuth(string code, string state)
         {
-            var tokenResult = CommonApi.GetToken(WeixinOptions.Value.CorpId, WeixinOptions.Value.Secret);
+            var tokenResult = CommonApi.GetToken(WeixinOptions.CorpId, WeixinOptions.Secret);
 
             var openInfo = new Senparc.Weixin.QY.AdvancedAPIs.OAuth2.GetUserInfoResult();
             try
@@ -57,7 +60,7 @@ namespace PHDS.core.Controllers
                 ViewData["Message"] = Newtonsoft.Json.JsonConvert.SerializeObject(e.JsonResult, Newtonsoft.Json.Formatting.Indented);
                 return View();
             }
-            //catch(ArgumentNullException e)
+            //catch (ArgumentNullException e)
             //{
             //    ViewData["Message"] = e.Message;
             //    return View();
@@ -76,9 +79,49 @@ namespace PHDS.core.Controllers
             return View();
         }
 
+        public IActionResult AddBeginClock(ClockType type)
+        {
+            var b = Check(type, out var errors);
+            return View(errors);
+        }
         public IActionResult Error()
         {
             return View();
         }
+
+        private bool Check(ClockType type, out List<string> errors)
+        {
+            var b = true;
+            errors = new List<string>();
+
+            if (PinhuaContext.WeixinClockOptions.FirstOrDefault().Ip != HttpContext.Connection.RemoteIpAddress.ToString())
+            {
+                errors.Add("非公司网络");
+                b = false;
+            }
+
+            var planDetail = PinhuaContext.GetCurrentWorkPlanDetail();
+            if (planDetail == null)
+            {
+                errors.Add("非工作时段");
+                b = false;
+            }
+            else
+            {
+                planDetail.RangeOfBegin(out var t1, out var t2);
+                if (!DateTime.Now.IsBetween(t1, t2))
+                {
+                    errors.Add($"{planDetail.Name}上班打卡时段{planDetail.ToBeginRangeString()}，当前不在区间内");
+                    b = false;
+                }
+            }
+
+            return b;
+        }
+    }
+    public enum ClockType
+    {
+        上班打卡,
+        下班打卡
     }
 }

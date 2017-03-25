@@ -13,6 +13,7 @@ namespace PHDS.core
         {
             var host = new WebHostBuilder()
                 .UseKestrel()
+                .UseUrls("http://*:50000")
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()
                 .UseStartup<Startup>()

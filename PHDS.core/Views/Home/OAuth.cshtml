@@ -1,0 +1,123 @@
+﻿@using Senparc.Weixin.QY.AdvancedAPIs.MailList
+@using PHDS.core.Utility
+@using PHDS.core.Entities.Pinhua
+@using Microsoft.AspNetCore.Http
+
+@{
+    ViewData["Title"] = "打卡";
+    var memberResult = ViewData["Member"] is GetMemberResult ? ViewData["Member"] as GetMemberResult : new GetMemberResult();
+    var currentWorkTime = PinhuaContext.GetCurrentWorkPlanDetail();
+    Context.Session.SetString("memberResult", Newtonsoft.Json.JsonConvert.SerializeObject(memberResult));
+}
+<h2>@ViewData["Title"].</h2>
+<h3>@ViewData["Message"]</h3>
+
+@section Styles{
+    <style>
+        #table1 > tbody > tr > td {
+            border: 0;
+        }
+    </style>
+}
+
+<div class="alert alert-danger" style="padding:0" role="alert">
+    <table id="table1" class="table">
+        <tr><td style="width:100px;">现在时间</td><td id="current-time"></td></tr>
+        <tr>
+            <td>当前班段</td>
+            <td>@currentWorkTime?.ToRangeString() @currentWorkTime?.Name</td>
+        </tr>
+        <tr>
+            <td>上班打卡时间</td>
+            <td>@currentWorkTime?.ToBeginRangeString()</td>
+        </tr>
+        <tr>
+            <td>下班打卡时间</td>
+            <td>@currentWorkTime?.ToEndRangeString()</td>
+        </tr>
+        <tr>
+            <td>边界打卡时间</td>
+            <td>@currentWorkTime?.ToBorderRangeString()</td>
+        </tr>
+        <tr>
+            <td>公司WIFI</td>
+            <td>@(isInternalNetwork() ? "是" : "否")</td>
+        </tr>
+    </table>
+</div>
+
+<table class="table table-bordered">
+    <tr><td style="width:100px;">微信号</td><td>@memberResult.weixinid</td></tr>
+    <tr><td>内部号</td><td>@memberResult.userid</td></tr>
+    <tr><td>姓名</td><td>@memberResult.name</td></tr>
+    <tr><td>部门</td><td>@GetMemberDepartments(memberResult.department)</td></tr>
+    <tr><td>职位</td><td>@memberResult.position</td></tr>
+    <tr><td>手机</td><td>@memberResult.mobile</td></tr>
+</table>
+<div class="row">
+    <div class="col-xs-12">
+        <p>
+            <a asp-action="AddBeginClock" class="btn btn-primary">上班打卡</a>
+            <a asp-action="AddEndClock" class="btn btn-danger" style="margin-left:15px">下班打卡</a>
+        </p>
+    </div>
+</div>
+@section Scripts{
+    <script>
+    // 对Date的扩展，将 Date 转化为指定格式的String
+    // 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
+    // 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)
+    // 例子：
+    // (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423
+    // (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2006-7-2 8:9:4.18
+    Date.prototype.Format = function (fmt) { //author: meizz
+        var o = {
+            "M+": this.getMonth() + 1,                 //月份
+            "d+": this.getDate(),                    //日
+            "h+": this.getHours(),                   //小时
+            "m+": this.getMinutes(),                 //分
+            "s+": this.getSeconds(),                 //秒
+            "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+            "S": this.getMilliseconds()             //毫秒
+        };
+        if (/(y+)/.test(fmt))
+            fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+        for (var k in o)
+            if (new RegExp("(" + k + ")").test(fmt))
+                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+        return fmt;
+    }
+
+    $(document).ready(function () {
+        var _timestamp = @DateTime.Now.AsJavascriptsOrUnixTicks();
+        var formatter = 'yyyy年M月d日 hh:mm:ss'
+        var now = (new Date(_timestamp)).Format(formatter);
+        $('#current-time').text(now);
+        setInterval(function () {
+            _timestamp += 1000
+            var now = (new Date(_timestamp)).Format(formatter);
+            $('#current-time').text(now);
+        }, 1000);
+    })
+    </script>
+}
+
+@functions{
+    public bool isInternalNetwork()
+    {
+        var clockOptions = PinhuaContext.WeixinClockOptions.FirstOrDefault();
+        return Context.Connection.RemoteIpAddress.ToString() == clockOptions.Ip;
+    }
+
+    public string GetMemberDepartments(int[] ids)
+    {
+        if (ids == null)
+            return "";
+
+        var result = ViewData["DepartmentList"] is GetDepartmentListResult ? ViewData["DepartmentList"] as GetDepartmentListResult : new GetDepartmentListResult();
+        var departments = from p in result.department
+                          where ids.Contains(p.id)
+                          select p.name;
+        return string.Join("，", departments);
+    }
+}

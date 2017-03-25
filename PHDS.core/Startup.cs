@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using PHDS.core.Entities.Pinhua;
 
 namespace PHDS.core
 {
@@ -27,14 +29,22 @@ namespace PHDS.core
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Add DbContext
+            services.AddDbContext<PinhuaContext>(
+                options => options.UseSqlServer("Data Source=122.225.47.230,6012;Initial Catalog=Pinhua;Persist Security Info=True;User ID=sa;Password=Benny0922")
+                );
+            // Add Session
+            services.AddSession();
             // Add framework services.
             services.AddMvc();
+            // 注入IOptions<WeixinOptions>
+            services.AddOptions();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+            //loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
             if (env.IsDevelopment())
@@ -48,6 +58,8 @@ namespace PHDS.core
             }
 
             app.UseStaticFiles();
+
+            app.UseSession();
 
             app.UseMvc(routes =>
             {

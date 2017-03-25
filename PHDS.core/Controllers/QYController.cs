@@ -8,22 +8,16 @@ using Senparc.Weixin.MP.Sample.CommonService.QyMessageHandlers;
 using System.IO;
 using Senparc.Weixin.MP.MvcExtension;
 using System.Text;
-using PHDS.core.Entities;
+using PHDS.core.Utility;
 using Microsoft.Extensions.Options;
 
 namespace PHDS.core.Controllers
 {
     public class QYController : Controller
     {
-        public readonly IOptions<WeixinOptions> WeixinOptions;
         public static readonly string Token = "pinhuadashi";//与微信企业账号后台的Token设置保持一致，区分大小写。
         public static readonly string EncodingAESKey = "tM6f5ZGv24QiLmM5n8VSHQeiqZfcRQJ02ozQOVo9H8b";//与微信企业账号后台的EncodingAESKey设置保持一致，区分大小写。
         public static readonly string CorpId = "wx87c90793c5376e09";//与微信企业账号后台的EncodingAESKey设置保持一致，区分大小写。
-
-        public QYController(IOptions<WeixinOptions> weixinOptions)
-        {
-            this.WeixinOptions = weixinOptions;
-        }
 
         /// <summary>
         /// 微信后台验证地址（使用Get），微信企业后台应用的“修改配置”的Url填写如：http://sdk.weixin.senparc.com/qy
