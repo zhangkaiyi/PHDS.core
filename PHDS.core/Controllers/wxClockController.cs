@@ -15,78 +15,78 @@ using Newtonsoft.Json;
 
 namespace PHDS.core.Controllers
 {
-    public class HomeController : Controller
+    public class WxClockController : Controller
     {
-        public WeixinOptions WeixinOptions;
-        public WeixinClockOptions ClockOptions;
+        public WeixinOptions wxOptions;
+        public WeixinClockOptions clockOptions;
         public PinhuaContext pinhuaContext;
 
-        public HomeController(Entities.Pinhua.PinhuaContext pinhuaContext)
+        public WxClockController(Entities.Pinhua.PinhuaContext pinhuaContext)
         {
             this.pinhuaContext = pinhuaContext;
-            this.WeixinOptions = pinhuaContext.WeixinOptions.FirstOrDefault();
-            this.ClockOptions = pinhuaContext.WeixinClockOptions.FirstOrDefault();
-        }
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        public IActionResult About()
-        {
-            ViewData["Message"] = "Your application description page.";
-
-            return View();
-        }
-
-        public IActionResult Contact()
-        {
-            ViewData["Message"] = "Your contact page.";
-
-            return View();
+            this.wxOptions = pinhuaContext.WeixinOptions.FirstOrDefault();
+            this.clockOptions = pinhuaContext.WeixinClockOptions.FirstOrDefault();
         }
 
         public IActionResult OAuth(string code, string state)
         {
-            var tokenResult = CommonApi.GetToken(WeixinOptions.CorpId, WeixinOptions.Secret);
-
-            var openInfo = new Senparc.Weixin.QY.AdvancedAPIs.OAuth2.GetUserInfoResult();
-            try
+            if (string.IsNullOrEmpty(code))
             {
-                openInfo = OAuth2Api.GetUserId(tokenResult.access_token, code);
-            }
-            catch(ErrorJsonResultException e) when (e.JsonResult.errcode == Senparc.Weixin.ReturnCode.不合法的oauth_code)
-            {
-                ViewData["Message"] = Newtonsoft.Json.JsonConvert.SerializeObject(e.JsonResult, Newtonsoft.Json.Formatting.Indented);
+                ViewData["Message"] = "code值为空";
                 return View();
             }
-            //catch (ArgumentNullException e)
-            //{
-            //    ViewData["Message"] = e.Message;
-            //    return View();
-            //}
 
-            if (string.IsNullOrEmpty(openInfo.UserId))
+            var tokenResult = CommonApi.GetToken(wxOptions.CorpId, wxOptions.Secret);
+
+            if (!(tokenResult.errcode == Senparc.Weixin.ReturnCode_QY.请求成功))
+            {
+                ViewData["Message"] = JsonConvert.SerializeObject(tokenResult);
+                return View();
+            }
+
+            var userinfoResult = OAuth2Api.GetUserId(tokenResult.access_token, code);
+
+            if (!(userinfoResult.errcode == Senparc.Weixin.ReturnCode_QY.请求成功))
+            {
+                ViewData["Message"] = JsonConvert.SerializeObject(userinfoResult);
+                return View();
+            }
+
+            if (string.IsNullOrEmpty(userinfoResult.UserId))
             {
                 ViewData["Message"] = "非企业人员，考勤功能不可用！";
+                return View();
             }
-            else
-            {
-                ViewData["Member"] = MailListApi.GetMember(tokenResult.access_token, openInfo.UserId);
-                ViewData["DepartmentList"] = MailListApi.GetDepartmentList(tokenResult.access_token);
-            }
-            
+
+            var memberResult = MailListApi.GetMember(tokenResult.access_token, userinfoResult.UserId);
+            if (memberResult.errcode == Senparc.Weixin.ReturnCode_QY.请求成功)
+                ViewData["Member"] = memberResult;
+
+            var deptlistResult = MailListApi.GetDepartmentList(tokenResult.access_token);
+            if (deptlistResult.errcode == Senparc.Weixin.ReturnCode_QY.请求成功)
+                ViewData["DepartmentList"] = deptlistResult;
+
             return View();
         }
 
         public IActionResult ClockIn()
         {
             var b = CheckClockIn(ClockType.ClockIn, out var errors);
+            if (b)
+                if (!InsertWeixinClock(ClockType.ClockIn))
+                {
+                    errors.Add("数据库操作失败");
+                }
             return View(errors);
         }
         public IActionResult ClockOut()
         {
             var b = CheckClockOut(ClockType.ClockOut, out var errors);
+            if (b)
+                if (!InsertWeixinClock(ClockType.ClockOut))
+                {
+                    errors.Add("数据库操作失败");
+                }
             return View(errors);
         }
         public IActionResult Error()
@@ -146,12 +146,38 @@ namespace PHDS.core.Controllers
                 planDetail.RangeOfEnd(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
-                    errors.Add($"{planDetail.Name}上班打卡时段{planDetail.ToEndRangeString()}，当前不在区间内");
+                    errors.Add($"{planDetail.Name}下班打卡时段{planDetail.ToEndRangeString()}，当前不在区间内");
                     b = false;
                 }
             }
 
             return b;
         }
+
+        private bool InsertWeixinClock(ClockType type)
+        {
+            var session = HttpContext.Session.GetString("memberResult");
+            var member = JsonConvert.DeserializeObject<Senparc.Weixin.QY.AdvancedAPIs.MailList.GetMemberResult>(session);
+            var record = new WeixinClock
+            {
+                Clocktype = (int?)type,
+                Weixinid = member.weixinid,
+                Userid = member.userid,
+                Name = member.name,
+                Clocktime = DateTime.Now,
+            };
+
+            pinhuaContext.WeixinClock.Add(record);
+            var b = pinhuaContext.SaveChanges();
+            if (b > 0)
+                return true;
+            else
+                return false;
+        }
+    }
+    public enum ClockType
+    {
+        ClockOut,
+        ClockIn
     }
 }

@@ -26,6 +26,13 @@ namespace PHDS.core.Utility
             }
             return null;
         }
+        public static string CurrentRangeName(this PinhuaContext context)
+        {
+            var name = string.Empty;
+            var current = GetCurrentWorkPlanDetail(context);
+            name = current.Name;
+            return name;
+        }
     }
     public static class WeixinWorkPlanDetailExtensions
     {
@@ -120,5 +127,6 @@ namespace PHDS.core.Utility
             RangeOfWorkTime(item, out var left, out var right);
             return DateTime.Now.IsBetween(left, right);
         }
+
     }
 }

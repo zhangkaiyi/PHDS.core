@@ -1,0 +1,44 @@
+﻿@model List<string>
+@using PHDS.core.Entities.Pinhua
+@using PHDS.core.Utility
+@{
+    ViewData["Title"] = "上班打卡";
+    var memberResult = Newtonsoft.Json.JsonConvert.DeserializeObject<Senparc.Weixin.QY.AdvancedAPIs.MailList.GetMemberResult>(Context.Session.GetString("memberResult"));
+    var currentWorkTime = PinhuaContext.GetCurrentWorkPlanDetail();
+}
+
+@*<h2>@ViewData["Title"].</h2>*@
+<h3></h3>
+@if (Model.Count > 0)
+{
+    <div class="alert alert-danger">
+        <div class="text-center" style="margin:25px auto 25px;font-size:60px;vertical-align:middle">
+            <p><i class="fa fa-warning"></i></p>
+            <h3>@(memberResult.name)，您打卡失败了！</h3>
+            <h4>当前时间：@DateTime.Now.ToString("HH:mm")</h4>
+            <p></p>
+        </div>
+        <h4>失败原因可能如下：</h4>
+        <ul>
+            @foreach(var error in Model)
+            {
+                <li><h5>@error</h5></li>
+
+            }
+            <li><a href="javascript:window.history.go(-1);" class="btn btn-danger btn-sm"><i class="fa fa-angle-double-left"></i> 返回</a></li>
+        </ul>
+    </div>
+}
+else
+{
+    <div class="alert alert-success">
+        <div class="text-center" style="margin:25px auto 25px;font-size:70px;">
+            <p><i class="fa fa-check-circle"></i></p>
+            <h3>@(memberResult.name)，恭喜您打卡成功！</h3>
+            <h4>@(currentWorkTime.Name)，下班打卡</h4>
+            <h4>@DateTime.Now.ToShortTimeString()</h4>
+            <a href="javascript:window.history.go(-1);" class="btn btn-success"><i class="fa fa-angle-double-left"></i> 返回</a>
+        </div>
+    </div>
+
+}

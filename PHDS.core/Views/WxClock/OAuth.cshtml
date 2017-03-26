@@ -1,20 +1,40 @@
 ﻿@using Senparc.Weixin.QY.AdvancedAPIs.MailList
 @using PHDS.core.Utility
 @using PHDS.core.Entities.Pinhua
-@using Microsoft.AspNetCore.Http
 
 @{
     ViewData["Title"] = "打卡";
-    var memberResult = ViewData["Member"] is GetMemberResult ? ViewData["Member"] as GetMemberResult : new GetMemberResult();
+    var memberResult = ViewData["Member"] as GetMemberResult;
     var currentWorkTime = PinhuaContext.GetCurrentWorkPlanDetail();
     Context.Session.SetString("memberResult", Newtonsoft.Json.JsonConvert.SerializeObject(memberResult));
 }
 <div class="row text-center bg-primary" style="font-size:22px;padding:30px 0px 30px 0px">
     <p><i class="fa fa-clock-o"></i> <span id="current-time"></span></p>
-    <p style="margin-top:20px;">
-        <a asp-action="addbeginclock" class="btn btn-success"><i class="fa fa-arrow-circle-o-up"></i> 上班</a>
-        <a asp-action="addbeginclock" class="btn btn-danger">下班 <i class="fa fa-arrow-circle-o-down"></i></a>
-    </p>
+    <div>
+        @if (currentWorkTime == null)
+        {
+            <p style="margin-top:20px;">非工作时间</p>
+        }
+        else
+        {
+            <div style="font-size:16px;">
+                @if (currentWorkTime.IsRangeOfBegin())
+                {
+                    <a asp-action="ClockIn" class="btn btn-success"><i class="fa fa-arrow-up"></i> @(currentWorkTime.Name)上班</a>
+                }
+                else if (currentWorkTime.IsRangeOfEnd())
+                {
+                    <a asp-action="ClockOut" class="btn btn-danger"><i class="fa fa-arrow-down"></i> @(currentWorkTime.Name)下班</a>
+                }
+                else
+                {
+                    <p>非打卡时间</p>
+                    <p>上班卡：@currentWorkTime.ToBeginRangeString()</p>
+                    <p>下班卡：@currentWorkTime.ToEndRangeString()</p>
+                }
+            </div>
+        }
+    </div>
 </div>
 
 <h3>@ViewData["Message"]</h3>
@@ -28,46 +48,45 @@
 }
 <div class="alert alert-danger" style="padding:0" role="alert">
     <table id="table1" class="table">
-        <tr><td class="col-xs-4">微信号</td><td>@memberResult.weixinid</td></tr>
-        <tr><td>姓名</td><td>@memberResult.name</td></tr>
-        <tr><td>部门</td><td>@GetMemberDepartments(memberResult.department)</td></tr>
+        <tr><td class="col-xs-4">用户号</td><td>@memberResult?.userid</td></tr>
+        <tr><td>姓名</td><td>@memberResult?.name</td></tr>
+        <tr><td>部门</td><td>@GetMemberDepartments(memberResult?.department)</td></tr>
         <tr>
             <td class="col-xs-4">公司网络</td>
-            <td>@(isInternalNetwork() ? "是，允许打卡" : "否，禁止打卡")</td>
+            <td>@(isInternalNetwork() ? Html.Raw("是") : Html.Raw("否"))</td>
         </tr>
         <tr>
             <td>当前班段</td>
             <td>@currentWorkTime?.ToRangeString() @currentWorkTime?.Name</td>
         </tr>
         <tr>
-            <td>打卡时间</td>
-            <td>@currentWorkTime?.ToBorderRangeString()</td>
+            <td>上班卡</td>
+            <td>
+                @currentWorkTime?.ToBeginRangeString() @if (currentWorkTime.IsRangeOfBegin())
+                {
+                    <i class="fa fa-check"></i>
+                }
+                else
+                {
+                    <i class="fa fa-close"></i>
+                }
+            </td>
         </tr>
-        @*<tr>
-            @if (currentWorkTime == null)
+        <tr>
+            <td>下班卡</td>
+            <td>
+                @currentWorkTime?.ToEndRangeString() @if (currentWorkTime.IsRangeOfEnd())
             {
-                <td colspan="2">非工作时间</td>
-            }
-            else
-            {
-                if (currentWorkTime.IsRangeOfBegin())
-                {
-                    <td colspan="2">可打上班卡</td>
+                    <i class="fa fa-check"></i>
                 }
-                if (currentWorkTime.IsRangeOfEnd())
+                else
                 {
-                    <td colspan="2">可打下班卡</td>
+                    <i class="fa fa-close"></i>
                 }
-            }
-        </tr>*@
+            </td>
+        </tr>
     </table>
 </div>
-
-@*<table class="table table-bordered">
-    <tr><td class="col-xs-4">微信号</td><td>@memberResult.weixinid</td></tr>
-    <tr><td>姓名</td><td>@memberResult.name</td></tr>
-    <tr><td>部门</td><td>@GetMemberDepartments(memberResult.department)</td></tr>
-</table>*@
 
 @section Scripts{
     <script>
@@ -97,7 +116,7 @@
 
     $(document).ready(function () {
         var _timestamp = @DateTime.Now.AsJavascriptsOrUnixTicks();
-        var formatter = 'MM/dd hh:mm:ss'
+        var formatter = 'hh:mm:ss'
         var now = (new Date(_timestamp)).Format(formatter);
         $('#current-time').text(now);
         setInterval(function () {

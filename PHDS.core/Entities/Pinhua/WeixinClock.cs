@@ -6,7 +6,7 @@ namespace PHDS.core.Entities.Pinhua
     public partial class WeixinClock
     {
         public int Id { get; set; }
-        public string Clocktype { get; set; }
+        public int? Clocktype { get; set; }
         public string Weixinid { get; set; }
         public string Userid { get; set; }
         public string Name { get; set; }
@@ -18,5 +18,6 @@ namespace PHDS.core.Entities.Pinhua
         public string ExcelServerWiid { get; set; }
         public string ExcelServerRtid { get; set; }
         public int? ExcelServerChg { get; set; }
+        public int? ClockRangeId { get; set; }
     }
 }

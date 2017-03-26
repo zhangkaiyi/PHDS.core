@@ -2,7 +2,7 @@
 @using PHDS.core.Entities.Pinhua
 @using PHDS.core.Utility
 @{
-    ViewData["Title"] = "上班打卡";
+    ViewData["Title"] = "下班打卡";
     var memberResult = Newtonsoft.Json.JsonConvert.DeserializeObject<Senparc.Weixin.QY.AdvancedAPIs.MailList.GetMemberResult>(Context.Session.GetString("memberResult"));
     var currentWorkTime = PinhuaContext.GetCurrentWorkPlanDetail();
 }
@@ -42,13 +42,3 @@ else
     </div>
 
 }
-@*@if (currentWorkTime != null)
-{
-    <table class="table table-bordered">
-        <tr><td>班段</td><td>@currentWorkTime.Name</td></tr>
-        <tr><td>区间</td><td>@currentWorkTime.ToRangeString()</td></tr>
-        <tr><td>上班打卡时间</td><td>@currentWorkTime.ToBeginRangeString()</td></tr>
-        <tr><td>下班打卡时间</td><td>@currentWorkTime.ToEndRangeString()</td></tr>
-        <tr><td>边界打卡时间</td><td>@currentWorkTime.ToBorderRangeString()</td></tr>
-    </table>
-}*@

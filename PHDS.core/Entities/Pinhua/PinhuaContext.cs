@@ -217,6 +217,7 @@ namespace PHDS.core.Entities.Pinhua
         // Unable to generate entity type for table 'dbo.工资项目_主表'. Please see the warning messages.
         // Unable to generate entity type for table 'dbo.工资档案_明细'. Please see the warning messages.
         // Unable to generate entity type for table 'dbo.月考勤汇总_明细'. Please see the warning messages.
+
         public PinhuaContext(DbContextOptions<PinhuaContext> options) : base(options)
         {
 
@@ -4363,8 +4364,6 @@ namespace PHDS.core.Entities.Pinhua
                     .HasName("idx1");
 
                 entity.Property(e => e.Clocktime).HasColumnType("datetime");
-
-                entity.Property(e => e.Clocktype).HasMaxLength(20);
 
                 entity.Property(e => e.ExcelServerChg).HasColumnName("ExcelServerCHG");
 
