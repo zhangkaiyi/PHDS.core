@@ -4363,6 +4363,8 @@ namespace PHDS.core.Entities.Pinhua
                 entity.HasIndex(e => new { e.ExcelServerRcid, e.ExcelServerWiid })
                     .HasName("idx1");
 
+                entity.Property(e => e.ClockPlanId).HasMaxLength(100);
+
                 entity.Property(e => e.Clocktime).HasColumnType("datetime");
 
                 entity.Property(e => e.ExcelServerChg).HasColumnName("ExcelServerCHG");

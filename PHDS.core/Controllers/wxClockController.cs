@@ -12,6 +12,10 @@ using PHDS.core.Entities.Pinhua;
 using Microsoft.AspNetCore.Http;
 using Senparc.Weixin.Exceptions;
 using Newtonsoft.Json;
+using Senparc.Weixin.HttpUtility;
+using Senparc.Weixin.QY.AdvancedAPIs.MailList;
+using Microsoft.EntityFrameworkCore;
+using System.Data.SqlClient;
 
 namespace PHDS.core.Controllers
 {
@@ -28,7 +32,7 @@ namespace PHDS.core.Controllers
             this.clockOptions = pinhuaContext.WeixinClockOptions.FirstOrDefault();
         }
 
-        public IActionResult OAuth(string code, string state)
+        public IActionResult OAuth(string code, string state, string returnUrl)
         {
             if (string.IsNullOrEmpty(code))
             {
@@ -60,13 +64,37 @@ namespace PHDS.core.Controllers
 
             var memberResult = MailListApi.GetMember(tokenResult.access_token, userinfoResult.UserId);
             if (memberResult.errcode == Senparc.Weixin.ReturnCode_QY.请求成功)
-                ViewData["Member"] = memberResult;
-
-            var deptlistResult = MailListApi.GetDepartmentList(tokenResult.access_token);
-            if (deptlistResult.errcode == Senparc.Weixin.ReturnCode_QY.请求成功)
-                ViewData["DepartmentList"] = deptlistResult;
+            {
+                if (string.IsNullOrEmpty(returnUrl))
+                    return View();
+                else
+                {
+                    var memberString = JsonConvert.SerializeObject(memberResult);
+                    var memberParam = $"?member={memberString.UrlEncode()}";
+                    return Redirect(returnUrl + memberParam);
+                }
+            }
 
             return View();
+        }
+
+        public IActionResult Index(string member)
+        {
+            if (string.IsNullOrEmpty(member))
+            {
+                ViewData["Message"] = "人员信息不存在！";
+                return View();
+            }
+            var memberJson = member.UrlDecode();
+            var memberResult = JsonConvert.DeserializeObject<GetMemberResult>(memberJson);
+            if (string.IsNullOrEmpty(memberResult.userid))
+            {
+                ViewData["Message"] = "人员信息无效！";
+                return View();
+            }
+
+            HttpContext.Session.SetObjectAsJson("memberResult", memberResult);
+            return View(memberResult);
         }
 
         public IActionResult ClockIn()
@@ -105,7 +133,7 @@ namespace PHDS.core.Controllers
                 b = false;
             }
 
-            var planDetail = pinhuaContext.GetCurrentWorkPlanDetail();
+            var planDetail = pinhuaContext.GetCurrentClockRange();
             if (planDetail == null)
             {
                 errors.Add("非工作时段");
@@ -113,7 +141,7 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfBegin(out var t1, out var t2);
+                planDetail.RangeOfClockIn(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
                     errors.Add($"{planDetail.Name}上班打卡时段{planDetail.ToBeginRangeString()}，当前不在区间内");
@@ -135,7 +163,7 @@ namespace PHDS.core.Controllers
                 b = false;
             }
 
-            var planDetail = pinhuaContext.GetCurrentWorkPlanDetail();
+            var planDetail = pinhuaContext.GetCurrentClockRange();
             if (planDetail == null)
             {
                 errors.Add("非工作时段");
@@ -143,7 +171,7 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfEnd(out var t1, out var t2);
+                planDetail.RangeOfClockOut(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
                     errors.Add($"{planDetail.Name}下班打卡时段{planDetail.ToEndRangeString()}，当前不在区间内");
@@ -156,10 +184,27 @@ namespace PHDS.core.Controllers
 
         private bool InsertWeixinClock(ClockType type)
         {
-            var session = HttpContext.Session.GetString("memberResult");
-            var member = JsonConvert.DeserializeObject<Senparc.Weixin.QY.AdvancedAPIs.MailList.GetMemberResult>(session);
+            var member = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
+
+            var rtId = "144.1";
+
+            var rcId = pinhuaContext.GetNewRcId();
+
+            var repCase = new EsRepCase
+            {
+                RcId = rcId,
+                RtId = rtId,
+                LstFiller = 2,
+                LstFillerName = member.name,
+                LstFillDate = DateTime.Now,
+                FillDate = DateTime.Now,
+            };
+
             var record = new WeixinClock
             {
+                ExcelServerRtid = rtId,
+                ExcelServerRcid = rcId,
+                ClockPlanId = pinhuaContext.GetCurrentClockRange().ExcelServerRcid,
                 Clocktype = (int?)type,
                 Weixinid = member.weixinid,
                 Userid = member.userid,
@@ -167,7 +212,9 @@ namespace PHDS.core.Controllers
                 Clocktime = DateTime.Now,
             };
 
+            pinhuaContext.EsRepCase.Add(repCase);
             pinhuaContext.WeixinClock.Add(record);
+
             var b = pinhuaContext.SaveChanges();
             if (b > 0)
                 return true;

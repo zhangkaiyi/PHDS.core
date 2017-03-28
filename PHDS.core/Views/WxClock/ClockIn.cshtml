@@ -4,7 +4,7 @@
 @{
     ViewData["Title"] = "下班打卡";
     var memberResult = Newtonsoft.Json.JsonConvert.DeserializeObject<Senparc.Weixin.QY.AdvancedAPIs.MailList.GetMemberResult>(Context.Session.GetString("memberResult"));
-    var currentWorkTime = PinhuaContext.GetCurrentWorkPlanDetail();
+    var currentWorkTime = PinhuaContext.GetCurrentClockRange();
 }
 
 @*<h2>@ViewData["Title"].</h2>*@
@@ -35,7 +35,7 @@ else
         <div class="text-center" style="margin:25px auto 25px;font-size:70px;">
             <p><i class="fa fa-check-circle"></i></p>
             <h3>@(memberResult.name)，恭喜您打卡成功！</h3>
-            <h4>@(currentWorkTime.Name)，上班打卡</h4>
+            <h4>@(currentWorkTime.Name)，签到</h4>
             <h4>@DateTime.Now.ToShortTimeString()</h4>
             <a href="javascript:window.history.go(-1);" class="btn btn-success"><i class="fa fa-angle-double-left"></i> 返回</a>
         </div>

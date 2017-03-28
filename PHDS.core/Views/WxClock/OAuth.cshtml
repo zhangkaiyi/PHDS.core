@@ -5,19 +5,19 @@
 @{
     ViewData["Title"] = "打卡";
     var memberResult = ViewData["Member"] as GetMemberResult;
-    var currentWorkTime = PinhuaContext.GetCurrentWorkPlanDetail();
+    var currentWorkTime = PinhuaContext.GetCurrentWorkingRange();
     Context.Session.SetString("memberResult", Newtonsoft.Json.JsonConvert.SerializeObject(memberResult));
 }
 <div class="row text-center bg-primary" style="font-size:22px;padding:30px 0px 30px 0px">
     <p><i class="fa fa-clock-o"></i> <span id="current-time"></span></p>
-    <div>
+    <div style="font-size:16px">
         @if (currentWorkTime == null)
         {
-            <p style="margin-top:20px;">非工作时间</p>
+            <p>非工作时间</p>
         }
         else
         {
-            <div style="font-size:16px;">
+            <div>
                 @if (currentWorkTime.IsRangeOfBegin())
                 {
                     <a asp-action="ClockIn" class="btn btn-success"><i class="fa fa-arrow-up"></i> @(currentWorkTime.Name)上班</a>
@@ -53,7 +53,7 @@
         <tr><td>部门</td><td>@GetMemberDepartments(memberResult?.department)</td></tr>
         <tr>
             <td class="col-xs-4">公司网络</td>
-            <td>@(isInternalNetwork() ? Html.Raw("是") : Html.Raw("否"))</td>
+            <td>@(PinhuaContext.IsInternalNetwork() ? Html.Raw("是") : Html.Raw("否"))</td>
         </tr>
         <tr>
             <td>当前班段</td>
@@ -129,12 +129,6 @@
 }
 
 @functions{
-    public bool isInternalNetwork()
-    {
-        var clockOptions = PinhuaContext.WeixinClockOptions.FirstOrDefault();
-        return Context.Connection.RemoteIpAddress.ToString() == clockOptions.Ip;
-    }
-
     public string GetMemberDepartments(int[] ids)
     {
         if (ids == null)

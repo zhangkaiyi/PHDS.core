@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using PHDS.core.Entities.Pinhua;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.AspNetCore.Http;
 
 namespace PHDS.core
 {
@@ -39,10 +41,13 @@ namespace PHDS.core
             services.AddMvc();
             // 注入IOptions<WeixinOptions>
             services.AddOptions();
+            // 注入IHttpContextAccessor实现HttpContext.Current
+            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
         {
             //loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -67,6 +72,8 @@ namespace PHDS.core
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            Utility.HttpContext.ServiceProvider = serviceProvider;
         }
     }
 }

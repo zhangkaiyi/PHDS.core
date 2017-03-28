@@ -105,7 +105,7 @@ namespace PHDS.core.Controllers
                 b = false;
             }
 
-            var planDetail = pinhuaContext.GetCurrentWorkPlanDetail();
+            var planDetail = pinhuaContext.GetCurrentClockRange();
             if (planDetail == null)
             {
                 errors.Add("非工作时段");
@@ -113,7 +113,7 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfBegin(out var t1, out var t2);
+                planDetail.RangeOfClockIn(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
                     errors.Add($"{planDetail.Name}上班打卡时段{planDetail.ToBeginRangeString()}，当前不在区间内");
@@ -135,7 +135,7 @@ namespace PHDS.core.Controllers
                 b = false;
             }
 
-            var planDetail = pinhuaContext.GetCurrentWorkPlanDetail();
+            var planDetail = pinhuaContext.GetCurrentClockRange();
             if (planDetail == null)
             {
                 errors.Add("非工作时段");
@@ -143,7 +143,7 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfEnd(out var t1, out var t2);
+                planDetail.RangeOfClockOut(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
                     errors.Add($"{planDetail.Name}上班打卡时段{planDetail.ToEndRangeString()}，当前不在区间内");
