@@ -97,21 +97,21 @@ namespace PHDS.core.Controllers
             return View(memberResult);
         }
 
-        public IActionResult ClockIn()
+        public IActionResult ClockIn(GetMemberResult member)
         {
             var b = CheckClockIn(ClockType.ClockIn, out var errors);
             if (b)
-                if (!InsertWeixinClock(ClockType.ClockIn))
+                if (!InsertWeixinClock(ClockType.ClockIn, member))
                 {
                     errors.Add("数据库操作失败");
                 }
             return View(errors);
         }
-        public IActionResult ClockOut()
+        public IActionResult ClockOut(GetMemberResult member)
         {
             var b = CheckClockOut(ClockType.ClockOut, out var errors);
             if (b)
-                if (!InsertWeixinClock(ClockType.ClockOut))
+                if (!InsertWeixinClock(ClockType.ClockOut, member))
                 {
                     errors.Add("数据库操作失败");
                 }
@@ -126,6 +126,7 @@ namespace PHDS.core.Controllers
         {
             var b = true;
             errors = new List<string>();
+            var sType = "签到";
 
             if (pinhuaContext.WeixinClockOptions.FirstOrDefault().Ip != HttpContext.Connection.RemoteIpAddress.ToString())
             {
@@ -141,12 +142,21 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfClockIn(out var t1, out var t2);
+                planDetail.RangeOfClockIn2(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
-                    errors.Add($"{planDetail.Name}上班打卡时段{planDetail.ToBeginRangeString()}，当前不在区间内");
+                    errors.Add($"{planDetail.Name}的{sType}时间是 {t1.ToShortTimeString()}～{t2.ToShortTimeString()}");
                     b = false;
                 }
+                var r = from p in pinhuaContext.WeixinClock
+                        where p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)ClockType.ClockIn
+                        select p;
+                if (r.Count() > 0)
+                {
+                    errors.Add($"当前班段 {r.FirstOrDefault().Clocktime.Value.ToShortTimeString()} 已经有过{sType}记录，请勿重复打卡！");
+                    b = false;
+                }
+  
             }
 
             return b;
@@ -156,6 +166,7 @@ namespace PHDS.core.Controllers
         {
             var b = true;
             errors = new List<string>();
+            var sType = "签退";
 
             if (pinhuaContext.WeixinClockOptions.FirstOrDefault().Ip != HttpContext.Connection.RemoteIpAddress.ToString())
             {
@@ -171,10 +182,18 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfClockOut(out var t1, out var t2);
+                planDetail.RangeOfClockOut2(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
-                    errors.Add($"{planDetail.Name}下班打卡时段{planDetail.ToEndRangeString()}，当前不在区间内");
+                    errors.Add($"{planDetail.Name}的{sType}时间是 {t1.ToShortTimeString()}～{t2.ToShortTimeString()}");
+                    b = false;
+                }
+                var r = from p in pinhuaContext.WeixinClock
+                        where p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)ClockType.ClockOut
+                        select p;
+                if (r.Count() > 0)
+                {
+                    errors.Add($"当前班段 {r.FirstOrDefault().Clocktime.Value.ToShortTimeString()} 已经有过{sType}记录，请勿重复打卡！");
                     b = false;
                 }
             }
@@ -182,10 +201,8 @@ namespace PHDS.core.Controllers
             return b;
         }
 
-        private bool InsertWeixinClock(ClockType type)
+        private bool InsertWeixinClock(ClockType type, GetMemberResult member)
         {
-            var member = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
-
             var rtId = "144.1";
 
             var rcId = pinhuaContext.GetNewRcId();

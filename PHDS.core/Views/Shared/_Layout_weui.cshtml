@@ -1,40 +1,62 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>jQuery WeUI</title>
+    <title>@ViewData["Title"] - PHDS</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.
 ">
-    <link rel="stylesheet" href="~/lib/font-awesome/css/font-awesome.css" />
-    <link rel="stylesheet" href="~/lib/jquery-weui/dist/lib/weui.css">
-    <link rel="stylesheet" href="~/lib/jquery-weui/dist/css/jquery-weui.css">
-    <link rel="stylesheet" href="~/lib/jquery-weui/dist/demos/css/demos.css">
-    <style>
-        .weui-tabbar {
-            position:fixed
-        }
-    </style>
-    @RenderSection("Styles", required: false)
+    <environment names="Development">
+        <link rel="stylesheet" href="~/lib/font-awesome/css/font-awesome.css" />
+        <link rel="stylesheet" href="~/lib/jquery-weui/dist/lib/weui.css">
+        <link rel="stylesheet" href="~/lib/jquery-weui/dist/css/jquery-weui.css">
+        <link rel="stylesheet" href="~/lib/jquery-weui/dist/demos/css/demos.css">
+    </environment>
+    <environment names="Staging,Production">
+        <link rel="stylesheet" href="~/lib/font-awesome/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="~/lib/jquery-weui/dist/lib/weui.min.css">
+        <link rel="stylesheet" href="~/lib/jquery-weui/dist/css/jquery-weui.min.css">
+        <link rel="stylesheet" href="~/lib/jquery-weui/dist/demos/css/demos.css">
+    </environment>
+
+        <style>
+            .weui-tabbar {
+                position: fixed
+            }
+        </style>
+        @RenderSection("Styles", required: false)
 </head>
 <body ontouchstart>
     @RenderBody()
+    <environment names="Development">
+        <script src="~/lib/jquery/dist/jquery.js"></script>
+        <script src="~/lib/jquery-weui/dist/lib/fastclick.js"></script>
+        <script>
+            $(function () {
+                FastClick.attach(document.body);
+            });
+        </script>
+        <script src="~/lib/jquery-weui/dist/js/jquery-weui.js"></script>
+        <script src="~/lib/vue/dist/vue.js"></script>
+    </environment>
+    <environment names="Staging,Production">
+        <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.2.0.min.js"
+                asp-fallback-src="~/lib/jquery/dist/jquery.min.js"
+                asp-fallback-test="window.jQuery"
+                crossorigin="anonymous"
+                integrity="sha384-K+ctZQ+LL8q6tP7I94W+qzQsfRV2a+AfHIi9k8z8l9ggpc8X+Ytst4yBo/hH+8Fk">
+        </script>
 
-    <script src="~/lib/jquery-weui/dist/lib/jquery-2.1.4.js"></script>
-    <script src="~/lib/jquery-weui/dist/lib/fastclick.js"></script>
-    <script>
-        $(function () {
-            FastClick.attach(document.body);
-        });
-    </script>
-    <script src="~/lib/jquery-weui/dist/js/jquery-weui.js"></script>
-    <script>
-        $("#a").select({
-            title: "选择职业",
-            items: ["法官", "医生", "猎人", "学生", "记者", "其他"]
-        });
-    </script>
-    @RenderSection("Scripts", required: false)
+        <script src="~/lib/jquery-weui/dist/lib/fastclick.js"></script>
+        <script>
+            $(function () {
+                FastClick.attach(document.body);
+            });
+        </script>
+        <script src="~/lib/jquery-weui/dist/js/jquery-weui.min.js"></script>
+        <script src="~/lib/vue/dist/vue.min.js"></script>
+    </environment>
+        @RenderSection("Scripts", required: false)
 </body>
 </html>

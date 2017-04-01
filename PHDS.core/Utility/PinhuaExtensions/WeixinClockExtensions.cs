@@ -8,89 +8,6 @@ using System.Threading.Tasks;
 
 namespace PHDS.core.Utility
 {
-    public static class HttpContext
-    {
-        public static IServiceProvider ServiceProvider;
-        public static Microsoft.AspNetCore.Http.HttpContext Current
-        {
-            get
-            {
-                object factory = ServiceProvider.GetService(typeof(Microsoft.AspNetCore.Http.IHttpContextAccessor));
-                Microsoft.AspNetCore.Http.HttpContext context = ((Microsoft.AspNetCore.Http.HttpContextAccessor)factory).HttpContext;
-                return context;
-            }
-        }
-    }
-
-    public static class PinhuaContextExtensions
-    {
-        /// <summary>
-        /// 判断是不是公司内部网络，公司网络信息在数据库中
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public static bool IsInternalNetwork(this PinhuaContext context)
-        {
-            var clockOptions = context.WeixinClockOptions.FirstOrDefault();
-            return HttpContext.Current.Connection.RemoteIpAddress.ToString() == clockOptions.Ip;
-        }
-
-        /// <summary>
-        /// 获取最大的Id
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="idName">要获取Id的代号</param>
-        /// <param name="n">Id要增大的数</param>
-        /// <returns></returns>
-        public static int GetNewId(this PinhuaContext context, int idName, int n)
-        {
-            context.Database.ExecuteSqlCommand($"exec GetNewId_s @id, @n", new[]{
-                 new SqlParameter("id", idName) ,new SqlParameter("n", n)
-            });
-
-            var obj = context.EsSysIdS
-                .Where(p => p.IdName == idName && p.IdDate.Year == DateTime.Now.Year && p.IdDate.Month == DateTime.Now.Month && p.IdDate.Day == DateTime.Now.Day)
-                .FirstOrDefault();
-
-            return obj == null ? 0 : obj.MaxId;
-        }
-
-        /// <summary>
-        /// 获取新的rcid文本
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public static string GetNewRcId(this PinhuaContext context)
-        {
-            var newId = context.GetNewId(26, 1);
-            var rcId = "rc" + DateTime.Now.ToString("yyyyMMdd") + newId.ToString("D5");
-
-            return newId == 0 ? "" : rcId;
-        }
-
-        /// <summary>
-        /// 获取当前班段信息
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public static WeixinWorkPlanDetail GetCurrentClockRange(this PinhuaContext context)
-        {
-            var detailList = from p1 in context.WeixinWorkPlan
-                             join p2 in context.WeixinWorkPlanDetail
-                             on p1.ExcelServerRcid equals p2.ExcelServerRcid
-                             where p1.Id == 1
-                             select p2;
-
-            foreach (var p in detailList)
-            {
-                p.RangeOfFullClockTime(out var left, out var right);
-
-                if (DateTime.Now.IsBetween(left, right))
-                    return p;
-            }
-            return null;
-        }
-    }
     public static class WeixinClockRangeExtensions
     {
         public static string ToRangeString(this WeixinWorkPlanDetail item)
@@ -185,37 +102,68 @@ namespace PHDS.core.Utility
             return true;
         }
 
-        public static bool RangeOfStartClockInToEndTime(this WeixinWorkPlanDetail item, out DateTime rangeLeft, out DateTime rangeRight)
+        public static bool RangeOfClockIn2(this WeixinWorkPlanDetail item, out DateTime begin, out DateTime end)
         {
-            rangeLeft = DateTime.MinValue;
-            rangeRight = DateTime.MinValue;
+            begin = DateTime.MinValue;
+            end = DateTime.MinValue;
+            var now = DateTime.Now;
             if (!item.IsEveryDatetimeNotNull())
                 return false;
 
-            rangeLeft = item.BeginTime.Value.AddMinutes(-item.BeginEarlier.Value).ConvertDateToToday();
-            rangeRight = item.EndTime.Value.ConvertDateToToday();
-            if (rangeLeft > rangeRight)
-                if (DateTime.Now < rangeLeft)
-                    rangeLeft = rangeLeft.AddDays(-1);
-                else
-                    rangeRight = rangeRight.AddDays(1);
+            begin = item.BeginTime.Value.AddMinutes(-item.BeginEarlier.Value).ConvertDateToToday();
+            end = item.EndTime.Value.ConvertDateToToday();
+
+            if(item.CrossAday.Value == 0)
+            {
+                if(now >= DateTime.Now.Date && now < begin)
+                {
+                    begin = begin.AddDays(-1);
+                    end = end.AddDays(-1);
+                }
+            }
+
+            if (item.CrossAday.Value == 1) {
+                end = end.AddDays(item.CrossAday.Value);
+
+                if (now < begin && now >= DateTime.Now.Date)
+                {
+                    begin = begin.AddDays(-item.CrossAday.Value);
+                    end = end.AddDays(-item.CrossAday.Value);
+                }
+            }
             return true;
         }
 
-        public static bool RangeOfBeginTimeToStopClockOut(this WeixinWorkPlanDetail item, out DateTime rangeLeft, out DateTime rangeRight)
+        public static bool RangeOfClockOut2(this WeixinWorkPlanDetail item, out DateTime begin, out DateTime end)
         {
-            rangeLeft = DateTime.MinValue;
-            rangeRight = DateTime.MinValue;
+            begin = DateTime.MinValue;
+            end = DateTime.MinValue;
+            var now = DateTime.Now;
             if (!item.IsEveryDatetimeNotNull())
                 return false;
+             
+            begin = item.BeginTime.Value.ConvertDateToToday();
+            end = item.EndTime.Value.AddMinutes(item.EndLater.Value).ConvertDateToToday();
 
-            rangeLeft = item.BeginTime.Value.ConvertDateToToday();
-            rangeRight = item.EndTime.Value.AddMinutes(item.EndLater.Value).ConvertDateToToday();
-            if (rangeLeft > rangeRight)
-                if (DateTime.Now < rangeLeft)
-                    rangeLeft = rangeLeft.AddDays(-1);
-                else
-                    rangeRight = rangeRight.AddDays(1);
+            if (item.CrossAday.Value == 0)
+            {
+                if (now >= DateTime.Now.Date && now < begin)
+                {
+                    begin = begin.AddDays(-1);
+                    end = end.AddDays(-1);
+                }
+            }
+
+            if (item.CrossAday.Value == 1)
+            {
+                end = end.AddDays(item.CrossAday.Value);
+
+                if (now < begin && now >= DateTime.Now.Date)
+                {
+                    begin = begin.AddDays(-item.CrossAday.Value);
+                    end = end.AddDays(-item.CrossAday.Value);
+                }
+            }
             return true;
         }
         private static bool IsEveryDatetimeNotNull(this WeixinWorkPlanDetail item)
@@ -253,13 +201,13 @@ namespace PHDS.core.Utility
         
         public static bool IsRangeOfStartClockInToEndTime(this WeixinWorkPlanDetail item)
         {
-            item.RangeOfStartClockInToEndTime(out var left, out var right);
+            item.RangeOfClockIn2(out var left, out var right);
             return DateTime.Now.IsBetween(left, right);
         }
 
         public static bool IsRangeOfBeginTimeToStopClockOut(this WeixinWorkPlanDetail item)
         {
-            item.RangeOfBeginTimeToStopClockOut(out var left, out var right);
+            item.RangeOfClockOut2(out var left, out var right);
             return DateTime.Now.IsBetween(left, right);
         }
 

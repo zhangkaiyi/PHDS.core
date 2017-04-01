@@ -20,5 +20,6 @@ namespace PHDS.core.Entities.Pinhua
         public string ExcelServerRtid { get; set; }
         public int? ExcelServerChg { get; set; }
         public int Id { get; set; }
+        public int? CrossAday { get; set; }
     }
 }

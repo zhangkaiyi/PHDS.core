@@ -4505,6 +4505,8 @@ namespace PHDS.core.Entities.Pinhua
 
                 entity.Property(e => e.BeginTime).HasColumnType("datetime");
 
+                entity.Property(e => e.CrossAday).HasColumnName("CrossADay");
+
                 entity.Property(e => e.EndTime).HasColumnType("datetime");
 
                 entity.Property(e => e.ExcelServerChg).HasColumnName("ExcelServerCHG");

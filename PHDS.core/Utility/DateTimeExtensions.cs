@@ -31,5 +31,21 @@ namespace System
         {
             return datetime.ToString("HH:mm");
         }
+
+        public static bool IsToday(this DateTime dt)
+        {
+            var b = dt.Year == DateTime.Now.Year
+                && dt.Month == DateTime.Now.Month
+                && dt.Day == DateTime.Now.Day;
+            return b;
+        }
+
+        public static bool isSameTime(this DateTime dt)
+        {
+            var b = dt.Hour == DateTime.Now.Hour
+                && dt.Minute == DateTime.Now.Minute
+                && dt.Second == DateTime.Now.Second;
+            return b;
+        }
     }
 }

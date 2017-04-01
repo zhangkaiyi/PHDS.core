@@ -7,69 +7,37 @@
 
 @{
     Layout = "_Layout_weui";
-    ViewData["Title"] = "打卡";
+    ViewData["Title"] = "考勤与假期管理";
     var currentWorkTime = PinhuaContext.GetCurrentClockRange();
 }
 
 @section Styles{
-    <style>
-        #table1 > tbody > tr > td {
-            border: 0;
-        }
-    </style>
+<style>
+    #table1 > tbody > tr > td {
+        border: 0;
+    }
+</style>
 }
-<div class="weui-tab">
+
+<div class="weui-tab" id="app">
     <div class="weui-tab__bd">
         <div id="tab1" class="weui-tab__bd-item weui-tab__bd-item--active">
             <header class='demos-header' style="color: #fff;  background-color: #337ab7;">
-                <p class="demos-title" style="color:#fff"><i class="fa fa-clock-o"></i> <span id="current-time"></span></p>
-                <p class="demos-second-title" style="color:#fff">@(currentWorkTime.Name)</p>
-                <div style="padding:15px;color:#fff" class="demos-sub-title">
-                    <div style="font-size:16px">
-                        @if (currentWorkTime == null)
-                        {
-                            <p>非工作时间</p>
-                        }
-                        else
-                        {
-                            @*<div>
-                                @if (currentWorkTime.IsRangeOfBegin())
-                                {
-                                    <a asp-action="ClockIn" class="weui-btn weui-btn_primary"><i class="fa fa-arrow-up"></i> @(currentWorkTime.Name)上班</a>
-                                }
-                                else if (currentWorkTime.IsRangeOfEnd())
-                                {
-                                    <a asp-action="ClockOut" class="weui-btn weui-btn_warn"><i class="fa fa-arrow-down"></i> @(currentWorkTime.Name)下班</a>
-                                }
-                                else
-                                {
-                                    <p>非打卡时间</p>
-                                    <p>上班卡：@currentWorkTime.ToBeginRangeString()</p>
-                                    <p>下班卡：@currentWorkTime.ToEndRangeString()</p>
-                                }
-                            </div>*@
-                            <div>
-                                @if (currentWorkTime.IsRangeOfStartClockInToEndTime())
-                                {
-                                    <a asp-action="ClockIn" class="weui-btn weui-btn_primary"><i class="fa fa-arrow-up"></i> 签到</a>
-                                }
-                                else
-                                {
-                                    <a href="javascript:;" class="weui-btn weui-btn_primary weui-btn_disabled"><i class="fa fa-close"></i> 签到</a>
-                                }
-                                @if (currentWorkTime.IsRangeOfBeginTimeToStopClockOut())
-                                {
-                                    <a asp-action="ClockOut" class="weui-btn weui-btn_warn"><i class="fa fa-arrow-down"></i> 签退</a>
-                                }
-                                else
-                                {
-                                    <a href="javascript:;" class="weui-btn weui-btn_warn weui-btn_disabled"><i class="fa fa-close"></i> 签退</a>
-                                }
-                            </div>
-                        }
+                <div style="padding:0px 15px;color:#fff" class="demos-sub-title">
+                    <p class="demos-title" style="color:#fff"><i class="fa fa-clock-o"></i> <span id="current-time"></span></p>
+                    @if (currentWorkTime == null)
+                    {
+                    <p>非工作时间</p>
+                    }
+                    else
+                    {
+                    <p style="padding-bottom:15px;font-size:16px;">@(currentWorkTime.Name) @currentWorkTime.ToRangeString()</p>
+                    <div>
+                        <a href="javascript:;" class="weui-btn weui-btn_primary" id="clockinButton"><i class="fa fa-arrow-up"></i> 签到</a>
+                        <a href="javascript:;" class="weui-btn weui-btn_warn" id="clockoutButton"><i class="fa fa-arrow-down"></i> 签退</a>
                     </div>
+                    }
                 </div>
-
             </header>
 
             <div class="weui-grids">
@@ -147,13 +115,43 @@
                 </a>
             </div>
             <div style="padding:30px"></div>
+
         </div>
         <div id="tab2" class="weui-tab__bd-item">
             <h1>页面二</h1>
+            <div class="weui-footer weui-footer_fixed-bottom" style="margin-bottom:200px">
+                <p class="weui-footer__text">Copyright © 2008-2016 weui.io</p>
+            </div>
         </div>
         <div id="tab3" class="weui-tab__bd-item">
-            <h1>页面三</h1>
+            <div class="weui-cells weui-cells_form" style="display:none;">
+                <div class="weui-cell">
+                    <div class="weui-cell__hd"><label for="date3" class="weui-label">日期</label></div>
+                    <div class="weui-cell__bd">
+                        <input class="weui-input" id="date3">
+                    </div>
+                </div>
+            </div>
+            <div id="inline-calendar"></div>
+            <div class="weui-panel weui-panel_access">
+                <div class="weui-cells__title">打卡记录</div>
+                <div class="weui-cells">
+                    @foreach (var item in PinhuaContext.GetCurrentClockData(Model.userid).OrderBy(p=>p.Clocktime))
+                    {
+
+                    <div class="weui-cell">
+                        <div class="weui-cell__bd">
+                            <p>@ClockTypeString(item.Clocktype)</p>
+                        </div>
+                        <div class="weui-cell__ft">@item.Clocktime.Value.ToString("yyyy/MM/dd HH:mm:ss")</div>
+                    </div>
+
+                    }
+                </div>
+            </div>
+
         </div>
+
         <div id="tab4" class="weui-tab__bd-item">
             <h1>页面四</h1>
             <div class="alert alert-danger" style="padding:0" role="alert">
@@ -174,11 +172,11 @@
                         <td>
                             @currentWorkTime?.ToBeginRangeString() @if (currentWorkTime.IsRangeOfClockIn())
                             {
-                                <i class="fa fa-check"></i>
+                            <i class="fa fa-check"></i>
                             }
                             else
                             {
-                                <i class="fa fa-close"></i>
+                            <i class="fa fa-close"></i>
                             }
                         </td>
                     </tr>
@@ -187,11 +185,11 @@
                         <td>
                             @currentWorkTime?.ToEndRangeString() @if (currentWorkTime.IsRangeOfClockOut())
                             {
-                                <i class="fa fa-check"></i>
+                            <i class="fa fa-check"></i>
                             }
                             else
                             {
-                                <i class="fa fa-close"></i>
+                            <i class="fa fa-close"></i>
                             }
                         </td>
                     </tr>
@@ -202,7 +200,6 @@
     </div>
     <div class="weui-tabbar">
         <a href="#tab1" class="weui-tabbar__item weui-bar__item--on">
-            <span class="weui-badge" style="position: absolute;top: -.4em;right: 1em;">8</span>
             <div class="weui-tabbar__icon">
                 <img src="~/lib/jquery-weui/demos/images/icon_nav_button.png" alt="">
             </div>
@@ -228,7 +225,12 @@
         </a>
     </div>
 </div>
-
+<form style="display:none" method="post" action="@Url.Action("ClockIn")" id="clockinForm">
+    @Html.EditorForModel();
+</form>
+<form style="display:none" method="post" action="@Url.Action("Clockout")" id="clockoutForm">
+    @Html.EditorForModel();
+</form>
 @section Scripts{
 <script>
     // 对Date的扩展，将 Date 转化为指定格式的String
@@ -265,6 +267,43 @@
             var now = (new Date(_timestamp)).Format(formatter);
             $('#current-time').text(now);
         }, 1000);
+
+        $('#clockinButton').on('click', function () {
+            $.confirm("现在您确定要打卡吗？", "确认打卡？", function () {
+                $('#clockinForm').submit()
+            }, function () {
+                //取消操作
+            });
+        })
+
+        $('#clockoutButton').on('click', function () {
+            $.confirm("现在您确定要打卡吗？", "确认打卡？", function () {
+                $('#clockoutForm').submit()
+            }, function () {
+                //取消操作
+            });
+        })
     })
+
 </script>
+
+<script>
+    $("#date3").calendar({
+        container: "#inline-calendar"
+    });
+</script>
+}
+
+@functions{
+    public Microsoft.AspNetCore.Html.IHtmlContent ClockTypeString(int? type)
+    {
+        if (type == null)
+            return Html.Raw("无效数据");
+        if (type.Value == 1)
+            return Html.Raw("<span style='color:#3CC51F'>签到</span>");
+        if (type.Value == 0)
+            return Html.Raw("<span style='color:#F43530'>签退</span>");
+
+        return Html.Raw("未知类型");
+    }
 }
