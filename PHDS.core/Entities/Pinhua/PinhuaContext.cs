@@ -4503,11 +4503,9 @@ namespace PHDS.core.Entities.Pinhua
                 entity.HasIndex(e => new { e.ExcelServerRcid, e.ExcelServerWiid })
                     .HasName("idx1");
 
-                entity.Property(e => e.BeginTime).HasColumnType("datetime");
+                entity.Property(e => e.Beginning).HasColumnType("datetime");
 
-                entity.Property(e => e.CrossAday).HasColumnName("CrossADay");
-
-                entity.Property(e => e.EndTime).HasColumnType("datetime");
+                entity.Property(e => e.Ending).HasColumnType("datetime");
 
                 entity.Property(e => e.ExcelServerChg).HasColumnName("ExcelServerCHG");
 

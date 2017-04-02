@@ -1,0 +1,79 @@
+﻿@model GetMemberResult
+@using Senparc.Weixin.QY.AdvancedAPIs.MailList
+@using PHDS.core.Utility
+@using PHDS.core.Entities.Pinhua
+@using System.Data.SqlClient
+@using Microsoft.EntityFrameworkCore
+
+@{
+    Layout = "_Layout_weui";
+    ViewData["Title"] = "考勤与假期管理";
+    var currentWorkTime = PinhuaContext.GetCurrentClockRange();
+}
+
+<div class="" id="app">
+    <div class="">
+        <div class="weui-cells weui-cells_form" style="display:none;">
+            <div class="weui-cell">
+                <div class="weui-cell__hd"><label for="date3" class="weui-label">日期</label></div>
+                <div class="weui-cell__bd">
+                    <input class="weui-input" id="date3">
+                </div>
+            </div>
+        </div>
+        <div id="inline-calendar"></div>
+        <div class="weui-panel weui-panel_access">
+            <div class="weui-panel__hd">打卡记录</div>
+            <div class="weui-panel__bd">
+                @foreach (var item in PinhuaContext.GetCurrentClockRecords(Model.userid).OrderBy(p => p.Clocktime))
+                {
+                    var clockResult = PinhuaContext.ComputeWeixinClockInfo(item);
+                    <a href="javascript:void(0);" class="weui-media-box weui-media-box_appmsg">
+                        <div class="weui-media-box__hd">
+                            @clockResult.RangeName
+                    </div>
+                    <div class="weui-media-box__bd">
+                        <h4 class="weui-media-box__title">@item.Clocktime.Value.ToString("MM/dd HH:mm") @clockResult.Type</h4>
+                        <p class="weui-media-box__desc">@clockResult.Result.ToString() @clockResult.Minute 分钟</p>
+                    </div>
+                </a>
+                }
+            </div>
+        </div>
+        <div style="padding:30px"></div>
+
+    </div>
+    <div class="weui-tabbar">
+        <a href="@Url.Action("Index", new { member = Context.Session.GetString("memberResult") })" class="weui-tabbar__item">
+            <div class="weui-tabbar__icon">
+                <img src="~/lib/jquery-weui/demos/images/icon_nav_button.png" alt="">
+            </div>
+            <p class="weui-tabbar__label">首页</p>
+        </a>
+        <a href="@Url.Action("Tab2")" class="weui-tabbar__item">
+            <div class="weui-tabbar__icon">
+                <img src="~/lib/jquery-weui/demos/images/icon_nav_msg.png" alt="">
+            </div>
+            <p class="weui-tabbar__label">消息通知</p>
+        </a>
+        <a href="@Url.Action("Tab3")" class="weui-tabbar__item weui-bar__item--on">
+            <div class="weui-tabbar__icon">
+                <img src="~/lib/jquery-weui/demos/images/icon_nav_article.png" alt="">
+            </div>
+            <p class="weui-tabbar__label">考勤明细</p>
+        </a>
+        <a href="@Url.Action("Tab4")" class="weui-tabbar__item">
+            <div class="weui-tabbar__icon">
+                <img src="~/lib/jquery-weui/demos/images/icon_nav_cell.png" alt="">
+            </div>
+            <p class="weui-tabbar__label">我</p>
+        </a>
+    </div>
+</div>
+@section Scripts{
+    <script>
+        $("#date3").calendar({
+            container: "#inline-calendar"
+        });
+    </script>
+}

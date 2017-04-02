@@ -11,14 +11,6 @@
     var currentWorkTime = PinhuaContext.GetCurrentClockRange();
 }
 
-@section Styles{
-<style>
-    #table1 > tbody > tr > td {
-        border: 0;
-    }
-</style>
-}
-
 <div class="weui-tab" id="app">
     <div class="weui-tab__bd">
         <div id="tab1" class="weui-tab__bd-item weui-tab__bd-item--active">
@@ -117,86 +109,7 @@
             <div style="padding:30px"></div>
 
         </div>
-        <div id="tab2" class="weui-tab__bd-item">
-            <h1>页面二</h1>
-            <div class="weui-footer weui-footer_fixed-bottom" style="margin-bottom:200px">
-                <p class="weui-footer__text">Copyright © 2008-2016 weui.io</p>
-            </div>
-        </div>
-        <div id="tab3" class="weui-tab__bd-item">
-            <div class="weui-cells weui-cells_form" style="display:none;">
-                <div class="weui-cell">
-                    <div class="weui-cell__hd"><label for="date3" class="weui-label">日期</label></div>
-                    <div class="weui-cell__bd">
-                        <input class="weui-input" id="date3">
-                    </div>
-                </div>
-            </div>
-            <div id="inline-calendar"></div>
-            <div class="weui-panel weui-panel_access">
-                <div class="weui-cells__title">打卡记录</div>
-                <div class="weui-cells">
-                    @foreach (var item in PinhuaContext.GetCurrentClockData(Model.userid).OrderBy(p=>p.Clocktime))
-                    {
 
-                    <div class="weui-cell">
-                        <div class="weui-cell__bd">
-                            <p>@ClockTypeString(item.Clocktype)</p>
-                        </div>
-                        <div class="weui-cell__ft">@item.Clocktime.Value.ToString("yyyy/MM/dd HH:mm:ss")</div>
-                    </div>
-
-                    }
-                </div>
-            </div>
-
-        </div>
-
-        <div id="tab4" class="weui-tab__bd-item">
-            <h1>页面四</h1>
-            <div class="alert alert-danger" style="padding:0" role="alert">
-                @ViewData["Message"]
-                <table id="table1" class="table">
-                    <tr><td class="col-xs-4">用户号</td><td>@Model?.userid</td></tr>
-                    <tr><td>姓名</td><td>@Model?.name</td></tr>
-                    <tr>
-                        <td class="col-xs-4">公司网络</td>
-                        <td>@(PinhuaContext.IsInternalNetwork() ? Html.Raw("是") : Html.Raw("否"))</td>
-                    </tr>
-                    <tr>
-                        <td>当前班段</td>
-                        <td>@currentWorkTime?.ToRangeString() @currentWorkTime?.Name</td>
-                    </tr>
-                    <tr>
-                        <td>上班卡</td>
-                        <td>
-                            @currentWorkTime?.ToBeginRangeString() @if (currentWorkTime.IsRangeOfClockIn())
-                            {
-                            <i class="fa fa-check"></i>
-                            }
-                            else
-                            {
-                            <i class="fa fa-close"></i>
-                            }
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>下班卡</td>
-                        <td>
-                            @currentWorkTime?.ToEndRangeString() @if (currentWorkTime.IsRangeOfClockOut())
-                            {
-                            <i class="fa fa-check"></i>
-                            }
-                            else
-                            {
-                            <i class="fa fa-close"></i>
-                            }
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
-        </div>
     </div>
     <div class="weui-tabbar">
         <a href="#tab1" class="weui-tabbar__item weui-bar__item--on">
@@ -205,19 +118,19 @@
             </div>
             <p class="weui-tabbar__label">首页</p>
         </a>
-        <a href="#tab2" class="weui-tabbar__item">
+        <a href="@Url.Action("Tab2")" class="weui-tabbar__item">
             <div class="weui-tabbar__icon">
                 <img src="~/lib/jquery-weui/demos/images/icon_nav_msg.png" alt="">
             </div>
             <p class="weui-tabbar__label">消息通知</p>
         </a>
-        <a href="#tab3" class="weui-tabbar__item">
+        <a href="@Url.Action("Tab3")" class="weui-tabbar__item">
             <div class="weui-tabbar__icon">
                 <img src="~/lib/jquery-weui/demos/images/icon_nav_article.png" alt="">
             </div>
             <p class="weui-tabbar__label">考勤明细</p>
         </a>
-        <a href="#tab4" class="weui-tabbar__item">
+        <a href="@Url.Action("Tab4")" class="weui-tabbar__item">
             <div class="weui-tabbar__icon">
                 <img src="~/lib/jquery-weui/demos/images/icon_nav_cell.png" alt="">
             </div>
@@ -269,7 +182,7 @@
         }, 1000);
 
         $('#clockinButton').on('click', function () {
-            $.confirm("现在您确定要打卡吗？", "确认打卡？", function () {
+            $.confirm("现在是 " + now + " 您确定要打卡吗？", "确认打卡？", function () {
                 $('#clockinForm').submit()
             }, function () {
                 //取消操作
@@ -277,7 +190,7 @@
         })
 
         $('#clockoutButton').on('click', function () {
-            $.confirm("现在您确定要打卡吗？", "确认打卡？", function () {
+            $.confirm("现在是 " + now + " 您确定要打卡吗？", "确认打卡？", function () {
                 $('#clockoutForm').submit()
             }, function () {
                 //取消操作
@@ -286,24 +199,4 @@
     })
 
 </script>
-
-<script>
-    $("#date3").calendar({
-        container: "#inline-calendar"
-    });
-</script>
-}
-
-@functions{
-    public Microsoft.AspNetCore.Html.IHtmlContent ClockTypeString(int? type)
-    {
-        if (type == null)
-            return Html.Raw("无效数据");
-        if (type.Value == 1)
-            return Html.Raw("<span style='color:#3CC51F'>签到</span>");
-        if (type.Value == 0)
-            return Html.Raw("<span style='color:#F43530'>签退</span>");
-
-        return Html.Raw("未知类型");
-    }
 }

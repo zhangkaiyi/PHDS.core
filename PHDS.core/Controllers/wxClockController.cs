@@ -99,9 +99,9 @@ namespace PHDS.core.Controllers
 
         public IActionResult ClockIn(GetMemberResult member)
         {
-            var b = CheckClockIn(ClockType.ClockIn, out var errors);
+            var b = CheckClockIn(member, ClockType.签到, out var errors);
             if (b)
-                if (!InsertWeixinClock(ClockType.ClockIn, member))
+                if (!InsertWeixinClock(ClockType.签到, member))
                 {
                     errors.Add("数据库操作失败");
                 }
@@ -109,20 +109,47 @@ namespace PHDS.core.Controllers
         }
         public IActionResult ClockOut(GetMemberResult member)
         {
-            var b = CheckClockOut(ClockType.ClockOut, out var errors);
+            var b = CheckClockOut(member, ClockType.签退, out var errors);
             if (b)
-                if (!InsertWeixinClock(ClockType.ClockOut, member))
+                if (!InsertWeixinClock(ClockType.签退, member))
                 {
                     errors.Add("数据库操作失败");
                 }
             return View(errors);
+        }
+
+        public IActionResult Tab2()
+        {
+            var memberResult = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
+            if (memberResult == null)
+                return View("Error");
+
+            return View(memberResult);
+        }
+
+        public IActionResult Tab3()
+        {
+            var memberResult = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
+            if (memberResult == null)
+                return View("Error");
+
+            return View(memberResult);
+        }
+
+        public IActionResult Tab4()
+        {
+            var memberResult = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
+            if (memberResult == null)
+                return View("Error");
+
+            return View(memberResult);
         }
         public IActionResult Error()
         {
             return View();
         }
 
-        private bool CheckClockIn(ClockType type, out List<string> errors)
+        private bool CheckClockIn(GetMemberResult member ,ClockType type, out List<string> errors)
         {
             var b = true;
             errors = new List<string>();
@@ -142,14 +169,14 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfClockIn2(out var t1, out var t2);
+                planDetail.RangeOfClockIn(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
                     errors.Add($"{planDetail.Name}的{sType}时间是 {t1.ToShortTimeString()}～{t2.ToShortTimeString()}");
                     b = false;
                 }
                 var r = from p in pinhuaContext.WeixinClock
-                        where p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)ClockType.ClockIn
+                        where p.Userid == member.userid && p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)ClockType.签到
                         select p;
                 if (r.Count() > 0)
                 {
@@ -162,7 +189,7 @@ namespace PHDS.core.Controllers
             return b;
         }
 
-        private bool CheckClockOut(ClockType type, out List<string> errors)
+        private bool CheckClockOut(GetMemberResult member   ,ClockType type, out List<string> errors)
         {
             var b = true;
             errors = new List<string>();
@@ -182,14 +209,14 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfClockOut2(out var t1, out var t2);
+                planDetail.RangeOfClockOut(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
                     errors.Add($"{planDetail.Name}的{sType}时间是 {t1.ToShortTimeString()}～{t2.ToShortTimeString()}");
                     b = false;
                 }
                 var r = from p in pinhuaContext.WeixinClock
-                        where p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)ClockType.ClockOut
+                        where member.userid == p.Userid && p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)ClockType.签退
                         select p;
                 if (r.Count() > 0)
                 {
@@ -241,7 +268,7 @@ namespace PHDS.core.Controllers
     }
     public enum ClockType
     {
-        ClockOut,
-        ClockIn
+        签退,
+        签到
     }
 }

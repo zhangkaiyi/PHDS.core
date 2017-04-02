@@ -6,12 +6,10 @@ namespace PHDS.core.Entities.Pinhua
     public partial class WeixinWorkPlanDetail
     {
         public string Name { get; set; }
-        public int? BeginEarlier { get; set; }
-        public DateTime? BeginTime { get; set; }
-        public int? BeginLater { get; set; }
-        public int? EndEarlier { get; set; }
-        public DateTime? EndTime { get; set; }
-        public int? EndLater { get; set; }
+        public int? MoveUp { get; set; }
+        public DateTime? Beginning { get; set; }
+        public DateTime? Ending { get; set; }
+        public int? PutOff { get; set; }
         public string ExcelServerRcid { get; set; }
         public int? ExcelServerRn { get; set; }
         public int? ExcelServerCn { get; set; }
@@ -20,6 +18,5 @@ namespace PHDS.core.Entities.Pinhua
         public string ExcelServerRtid { get; set; }
         public int? ExcelServerChg { get; set; }
         public int Id { get; set; }
-        public int? CrossAday { get; set; }
     }
 }

@@ -79,79 +79,11 @@ namespace PHDS.core.Controllers
             return View();
         }
 
-        public IActionResult ClockIn()
-        {
-            var b = CheckClockIn(ClockType.ClockIn, out var errors);
-            return View(errors);
-        }
-        public IActionResult ClockOut()
-        {
-            var b = CheckClockOut(ClockType.ClockOut, out var errors);
-            return View(errors);
-        }
         public IActionResult Error()
         {
             return View();
         }
 
-        private bool CheckClockIn(ClockType type, out List<string> errors)
-        {
-            var b = true;
-            errors = new List<string>();
 
-            if (pinhuaContext.WeixinClockOptions.FirstOrDefault().Ip != HttpContext.Connection.RemoteIpAddress.ToString())
-            {
-                errors.Add("非公司网络");
-                b = false;
-            }
-
-            var planDetail = pinhuaContext.GetCurrentClockRange();
-            if (planDetail == null)
-            {
-                errors.Add("非工作时段");
-                b = false;
-            }
-            else
-            {
-                planDetail.RangeOfClockIn(out var t1, out var t2);
-                if (!DateTime.Now.IsBetween(t1, t2))
-                {
-                    errors.Add($"{planDetail.Name}上班打卡时段{planDetail.ToBeginRangeString()}，当前不在区间内");
-                    b = false;
-                }
-            }
-
-            return b;
-        }
-
-        private bool CheckClockOut(ClockType type, out List<string> errors)
-        {
-            var b = true;
-            errors = new List<string>();
-
-            if (pinhuaContext.WeixinClockOptions.FirstOrDefault().Ip != HttpContext.Connection.RemoteIpAddress.ToString())
-            {
-                errors.Add("非公司网络");
-                b = false;
-            }
-
-            var planDetail = pinhuaContext.GetCurrentClockRange();
-            if (planDetail == null)
-            {
-                errors.Add("非工作时段");
-                b = false;
-            }
-            else
-            {
-                planDetail.RangeOfClockOut(out var t1, out var t2);
-                if (!DateTime.Now.IsBetween(t1, t2))
-                {
-                    errors.Add($"{planDetail.Name}上班打卡时段{planDetail.ToEndRangeString()}，当前不在区间内");
-                    b = false;
-                }
-            }
-
-            return b;
-        }
     }
 }

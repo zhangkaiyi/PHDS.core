@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PHDS.core.Entities;
 using PHDS.core.Entities.Pinhua;
 using System;
 using System.Collections.Generic;
@@ -129,14 +130,14 @@ namespace PHDS.core.Utility
 
             foreach (var range in ranges)
             {
-                var t1 = range.BeginTime.Value.AddMinutes(-range.BeginEarlier.Value).ConvertDateToToday();
+                var t1 = range.Beginning.Value.ConvertDateToToday().AddMinutes(-range.MoveUp.Value);
                 if (t1 < earliest)
                     earliest = t1;
-                var t2 = range.EndTime.Value.AddMinutes(range.EndLater.Value).ConvertDateToToday().AddDays(range.CrossAday.Value);
-                if(t2 > latest)
+                var t2 = range.Ending.Value.ConvertDateToToday().AddMinutes(range.PutOff.Value);
+                if (t2 > latest)
                     latest = t2;
             }
-            if (now <= latest && now <= earliest)   // 比最早时间早，说明在第二天，比最晚时间早，说明第一天的还没结束
+            if (now <= earliest)   // 比最早时间早，说明在第二天，那就要返回前一天的区间
             {
                 earliest = earliest.AddDays(-1);
                 latest = latest.AddDays(-1);
@@ -150,7 +151,7 @@ namespace PHDS.core.Utility
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public static List<WeixinClock> GetCurrentClockData(this PinhuaContext context, string userid)
+        public static List<WeixinClock> GetCurrentClockRecords(this PinhuaContext context, string userid)
         {
             var result = new List<WeixinClock>();
             var bret = context.GetCurrentClockRangesBorder(out var earliest, out var latest);
@@ -163,6 +164,67 @@ namespace PHDS.core.Utility
                 }
             }
             return result;
+        }
+
+        public static ClockResult ComputeWeixinClockInfo(this PinhuaContext context, WeixinClock clock)
+        {
+            if (clock == null)
+                throw new NullReferenceException($"{nameof(clock)} 不可为空");
+
+            var ranges = context.GetCurrentClockRanges();
+            if (ranges == null)
+                return null;
+
+            foreach (var range in ranges)
+            {
+                if (clock.Clocktype == (int)Controllers.ClockType.签到)
+                {
+                    range.RangeOfClockIn(out var begin, out var end);
+
+                    if (clock.Clocktime.Value.IsBetween(begin, end))
+                    {
+                        range.RangeOfWorkingTime(out var a, out var b);
+                        TimeSpan t = clock.Clocktime.Value.Subtract(a);
+                        ClockResultEnum result = default(ClockResultEnum);
+                        if (t.Ticks < 0)
+                            result = ClockResultEnum.提前;
+                        if (t.Ticks > 0)
+                            result = ClockResultEnum.迟到;
+
+                        return new ClockResult
+                        {
+                            Type = (Controllers.ClockType)clock.Clocktype.Value,
+                            Result = result,
+                            Minute = Math.Floor(t.Duration().TotalMinutes),
+                            RangeName = range.Name,
+                        };
+                    }
+                }
+                if (clock.Clocktype == (int)Controllers.ClockType.签退)
+                {
+                    range.RangeOfClockOut(out var begin, out var end);
+
+                    if (clock.Clocktime.Value.IsBetween(begin, end))
+                    {
+                        range.RangeOfWorkingTime(out var a, out var b);
+                        TimeSpan t = clock.Clocktime.Value.Subtract(b);
+                        ClockResultEnum result = default(ClockResultEnum);
+                        if (t.Ticks < 0)
+                            result = ClockResultEnum.早退;
+                        if (t.Ticks > 0)
+                            result = ClockResultEnum.延迟;
+
+                        return new ClockResult
+                        {
+                            Type = (Controllers.ClockType)clock.Clocktype.Value,
+                            Result = result,
+                            Minute = Math.Floor(t.Duration().TotalMinutes),
+                            RangeName = range.Name,
+                        };
+                    }
+                }
+            }
+            return null;
         }
     }
 }

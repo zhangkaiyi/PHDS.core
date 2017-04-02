@@ -14,6 +14,11 @@ namespace System
                 , datetime.Hour, datetime.Minute, datetime.Second);
         }
 
+        public static DateTime DropSeconds(this DateTime datetime)
+        {
+            return new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, 0);
+        }
+
         public static bool IsBetween(this DateTime datetime,DateTime left,DateTime right)
         {
             return left <= datetime && datetime <= right;
