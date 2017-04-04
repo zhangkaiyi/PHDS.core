@@ -7,7 +7,6 @@ describe('Error handling', () => {
   // hooks that prevents the component from rendering, but should not
   // break parent component
   ;[
-    ['data', 'data()'],
     ['render', 'render function'],
     ['beforeCreate', 'beforeCreate hook'],
     ['created', 'created hook'],
@@ -128,16 +127,6 @@ describe('Error handling', () => {
 
 function createErrorTestComponents () {
   const components = {}
-
-  // data
-  components.data = {
-    data () {
-      throw new Error('data')
-    },
-    render (h) {
-      return h('div')
-    }
-  }
 
   // render error
   components.render = {

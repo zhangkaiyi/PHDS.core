@@ -258,12 +258,12 @@ describe('Component', () => {
     expect(vm.$el.outerHTML).toBe('<ul><li>1</li><li>2</li></ul>')
   })
 
-  it('should warn when using camelCased props in in-DOM template', () => {
+  it('should warn when not passing props in kebab-case', () => {
     new Vue({
       data: {
         list: [{ a: 1 }, { a: 2 }]
       },
-      template: '<test :somecollection="list"></test>', // <-- simulate lowercased template
+      template: '<test :somecollection="list"></test>',
       components: {
         test: {
           template: '<ul><li v-for="item in someCollection">{{item.a}}</li></ul>',
@@ -273,24 +273,7 @@ describe('Component', () => {
     }).$mount()
     expect(
       'You should probably use "some-collection" instead of "someCollection".'
-    ).toHaveBeenTipped()
-  })
-
-  it('should warn when using camelCased events in in-DOM template', () => {
-    new Vue({
-      template: '<test @foobar="a++"></test>', // <-- simulate lowercased template
-      components: {
-        test: {
-          template: '<div></div>',
-          created () {
-            this.$emit('fooBar')
-          }
-        }
-      }
-    }).$mount()
-    expect(
-      'You should probably use "foo-bar" instead of "fooBar".'
-    ).toHaveBeenTipped()
+    ).toHaveBeenWarned()
   })
 
   it('not found component should not throw', () => {

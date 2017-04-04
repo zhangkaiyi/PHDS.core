@@ -8,7 +8,6 @@
     "jquery-validation-unobtrusive": "3.2.6",
     "font-awesome": "Font-Awesome#v4.7.0",
     "jquery-weui": "v1.0.1",
-    "weui": "v1.1.1",
-    "vue": "v2.2.6"
+    "vue": "v2.2.4"
   }
 }

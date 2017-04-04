@@ -14,6 +14,12 @@ namespace System
                 , datetime.Hour, datetime.Minute, datetime.Second);
         }
 
+        public static DateTime ConvertToTargetDate(this DateTime datetime, DateTime target)
+        {
+            return new DateTime(target.Year, target.Month, target.Day
+                , datetime.Hour, datetime.Minute, datetime.Second);
+        }
+
         public static DateTime DropSeconds(this DateTime datetime)
         {
             return new DateTime(datetime.Year, datetime.Month, datetime.Day, datetime.Hour, datetime.Minute, 0);

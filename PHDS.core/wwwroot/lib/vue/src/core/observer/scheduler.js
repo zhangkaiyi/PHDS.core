@@ -69,14 +69,10 @@ function flushSchedulerQueue () {
     }
   }
 
-  // reset scheduler before updated hook called
-  const oldQueue = queue.slice()
-  resetSchedulerState()
-
   // call updated hooks
-  index = oldQueue.length
+  index = queue.length
   while (index--) {
-    watcher = oldQueue[index]
+    watcher = queue[index]
     vm = watcher.vm
     if (vm._watcher === watcher && vm._isMounted) {
       callHook(vm, 'updated')
@@ -88,6 +84,8 @@ function flushSchedulerQueue () {
   if (devtools && config.devtools) {
     devtools.emit('flush')
   }
+
+  resetSchedulerState()
 }
 
 /**

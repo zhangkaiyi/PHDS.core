@@ -1,7 +1,5 @@
 'use strict'
 
-process.env.NODE_ENV = 'production'
-
 const Vue = require('../../dist/vue.runtime.common.js')
 const createRenderer = require('../../packages/vue-server-renderer').createRenderer
 const renderToString = createRenderer().renderToString

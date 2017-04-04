@@ -84,7 +84,6 @@ export function parse (
     warn,
     expectHTML: options.expectHTML,
     isUnaryTag: options.isUnaryTag,
-    canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldDecodeNewlines: options.shouldDecodeNewlines,
     start (tag, attrs, unary) {
       // check namespace.

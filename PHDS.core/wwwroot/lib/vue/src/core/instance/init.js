@@ -14,18 +14,14 @@ let uid = 0
 
 export function initMixin (Vue: Class<Component>) {
   Vue.prototype._init = function (options?: Object) {
+    /* istanbul ignore if */
+    if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+      mark('vue-perf-init')
+    }
+
     const vm: Component = this
     // a uid
     vm._uid = uid++
-
-    let startTag, endTag
-    /* istanbul ignore if */
-    if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-      startTag = `vue-perf-init:${vm._uid}`
-      endTag = `vue-perf-end:${vm._uid}`
-      mark(startTag)
-    }
-
     // a flag to avoid this being observed
     vm._isVue = true
     // merge options
@@ -61,8 +57,8 @@ export function initMixin (Vue: Class<Component>) {
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
       vm._name = formatComponentName(vm, false)
-      mark(endTag)
-      measure(`${vm._name} init`, startTag, endTag)
+      mark('vue-perf-init-end')
+      measure(`${vm._name} init`, 'vue-perf-init', 'vue-perf-init-end')
     }
 
     if (vm.$options.el) {

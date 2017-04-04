@@ -6,7 +6,6 @@ import { resolveConstructorOptions } from '../instance/init'
 import { resolveSlots } from '../instance/render-helpers/resolve-slots'
 
 import {
-  tip,
   warn,
   isObject,
   hasOwn,
@@ -134,7 +133,7 @@ export function createComponent (
   }
 
   // extract props
-  const propsData = extractProps(data, Ctor, tag)
+  const propsData = extractProps(data, Ctor)
 
   // functional component
   if (Ctor.options.functional) {
@@ -275,7 +274,7 @@ function resolveAsyncComponent (
   }
 }
 
-function extractProps (data: VNodeData, Ctor: Class<Component>, tag?: string): ?Object {
+function extractProps (data: VNodeData, Ctor: Class<Component>): ?Object {
   // we are only extracting raw values here.
   // validation and default values are handled in the child
   // component itself.
@@ -294,13 +293,12 @@ function extractProps (data: VNodeData, Ctor: Class<Component>, tag?: string): ?
           key !== keyInLowerCase &&
           attrs && attrs.hasOwnProperty(keyInLowerCase)
         ) {
-          tip(
-            `Prop "${keyInLowerCase}" is passed to component ` +
-            `${formatComponentName(tag || Ctor)}, but the declared prop name is` +
-            ` "${key}". ` +
-            `Note that HTML attributes are case-insensitive and camelCased ` +
-            `props need to use their kebab-case equivalents when using in-DOM ` +
-            `templates. You should probably use "${altKey}" instead of "${key}".`
+          warn(
+            `Prop "${keyInLowerCase}" is not declared in component ` +
+            `${formatComponentName(Ctor)}. Note that HTML attributes are ` +
+            `case-insensitive and camelCased props need to use their kebab-case ` +
+            `equivalents when using in-DOM templates. You should probably use ` +
+            `"${altKey}" instead of "${key}".`
           )
         }
       }

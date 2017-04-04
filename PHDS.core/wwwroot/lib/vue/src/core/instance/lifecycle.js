@@ -119,9 +119,6 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
     // call the last hook...
     vm._isDestroyed = true
-    // invoke destroy hooks on current rendered tree
-    vm.__patch__(vm._vnode, null)
-    // fire destroyed hook
     callHook(vm, 'destroyed')
     // turn off all instance listeners.
     vm.$off()
@@ -129,8 +126,8 @@ export function lifecycleMixin (Vue: Class<Component>) {
     if (vm.$el) {
       vm.$el.__vue__ = null
     }
-    // remove reference to DOM nodes (prevents leak)
-    vm.$options._parentElm = vm.$options._refElm = null
+    // invoke destroy hooks on current rendered tree
+    vm.__patch__(vm._vnode, null)
   }
 }
 

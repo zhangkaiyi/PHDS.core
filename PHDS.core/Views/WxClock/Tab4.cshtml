@@ -8,26 +8,69 @@
 
 @{
     Layout = "_Layout_weui";
-    ViewData["Title"] = "考勤与假期管理";
-    var currentWorkTime = PinhuaContext.GetCurrentClockRange();
+    ViewData["Title"] = "考勤管理";
+
+    var deptResult = ViewData[nameof(GetDepartmentListResult)] as GetDepartmentListResult;
 }
 
 <div class="" id="app">
     <div class="">
-        <div class="alert alert-danger" style="padding:0" role="alert">
-            @ViewData["Message"]
-            <table id="table1" class="table">
-                <tr><td class="col-xs-4">用户号</td><td>@Model?.userid</td></tr>
-                <tr><td>姓名</td><td>@Model?.name</td></tr>
-                <tr>
-                    <td class="col-xs-4">公司网络</td>
-                    <td>@(PinhuaContext.IsInternalNetwork() ? Html.Raw("是") : Html.Raw("否"))</td>
-                </tr>
-                <tr>
-                    <td>当前班段</td>
-                    <td>@currentWorkTime?.ToRangeString() @currentWorkTime?.Name</td>
-                </tr>
-            </table>
+        <div class="weui-cells__title">人员信息</div>
+        <div class="weui-cells">
+            <div class="weui-cell">
+                <div class="weui-cell__hd">
+                    <img src="@Model.avatar" style="width:200px;height:200px;border-radius:5px;" />
+                </div>
+            </div>
+            <div class="weui-cell">
+                <div class="weui-cell__hd">
+                    <p class="weui-label">微信号</p>
+                </div>
+                <div class="weui-cell__bd">@Model.weixinid</div>
+            </div>
+            <div class="weui-cell">
+                <div class="weui-cell__hd">
+                    <p class="weui-label">用户号</p>
+                </div>
+                <div class="weui-cell__bd">@Model.userid</div>
+            </div>
+            <div class="weui-cell">
+                <div class="weui-cell__hd">
+                    <p class="weui-label">姓名</p>
+                </div>
+                <div class="weui-cell__bd">@Model.name</div>
+            </div>
+            <div class="weui-cell">
+                <div class="weui-cell__hd">
+                    <p class="weui-label">性别</p>
+                </div>
+                <div class="weui-cell__bd">@Model.gender</div>
+            </div>
+            <div class="weui-cell">
+                <div class="weui-cell__hd">
+                    <p class="weui-label">手机</p>
+                </div>
+                <div class="weui-cell__bd">@Model.mobile</div>
+            </div>
+            <div class="weui-cell">
+                <div class="weui-cell__hd">
+                    <p class="weui-label">职位</p>
+                </div>
+                <div class="weui-cell__bd">@Model.position</div>
+            </div>
+            <div class="weui-cell">
+                <div class="weui-cell__hd">
+                    <p class="weui-label">部门</p>
+                </div>
+                <div class="weui-cell__bd">
+                    @{
+                        var depts = from p in deptResult.department
+                                    where Model.department.Contains(p.id)
+                                    select p.name;
+                        @string.Join(",", depts);
+                    }
+                </div>
+            </div>
         </div>
         <div style="padding:30px"></div>
     </div>
@@ -48,7 +91,7 @@
             <div class="weui-tabbar__icon">
                 <img src="~/lib/jquery-weui/demos/images/icon_nav_article.png" alt="">
             </div>
-            <p class="weui-tabbar__label">考勤明细</p>
+            <p class="weui-tabbar__label">考勤记录</p>
         </a>
         <a href="@Url.Action("Tab4")" class="weui-tabbar__item weui-bar__item--on">
             <div class="weui-tabbar__icon">

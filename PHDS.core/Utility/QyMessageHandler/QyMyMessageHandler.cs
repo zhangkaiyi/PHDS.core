@@ -30,7 +30,7 @@ namespace Senparc.Weixin.MP.Sample.CommonService.QyMessageHandlers
         public override IResponseMessageBase OnTextRequest(RequestMessageText requestMessage)
         {
             var responseMessage = this.CreateResponseMessage<ResponseMessageText>();
-            var code = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx87c90793c5376e09&redirect_uri=senderwood.vicp.net%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect";
+            var code = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx87c90793c5376e09&redirect_uri=122.225.47.230%3A6016%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect";
             responseMessage.Content = $"您发送了消息：{requestMessage.Content}，OpenId：{this.WeixinOpenId}，Code：{code}";
             return responseMessage;
         }

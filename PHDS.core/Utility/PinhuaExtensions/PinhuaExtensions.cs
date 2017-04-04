@@ -80,7 +80,7 @@ namespace PHDS.core.Utility
 
             foreach (var p in ranges)
             {
-                p.RangeOfFullClockTime(out var left, out var right);
+                p.今天的打卡开始到结束区间(out var left, out var right);
 
                 if (DateTime.Now.IsBetween(left, right))
                     return p;
@@ -147,14 +147,74 @@ namespace PHDS.core.Utility
         }
 
         /// <summary>
+        /// 获取当天打卡区间最早与最晚时间
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public static bool GetTargetDateClockRangesBorder(this PinhuaContext context, DateTime target, out DateTime earliest, out DateTime latest)
+        {
+            var now = DateTime.Now;
+            earliest = DateTime.MaxValue;
+            latest = DateTime.MinValue;
+
+            var ranges = context.GetCurrentClockRanges();
+            if (ranges == null)
+                return false;
+
+            foreach (var range in ranges)
+            {
+                var t1 = range.Beginning.Value.ConvertToTargetDate(target).AddMinutes(-range.MoveUp.Value);
+                if (t1 < earliest)
+                    earliest = t1;
+                var t2 = range.Ending.Value.ConvertToTargetDate(target).AddMinutes(range.PutOff.Value);
+                if (t2 > latest)
+                    latest = t2;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// 获取当天考勤记录集合
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public static List<WeixinClock> GetCurrentClockRecords(this PinhuaContext context, string userid)
+        public static List<WeixinClock> GetCurrentClockRecords(this PinhuaContext context, string userid = null)
         {
             var result = new List<WeixinClock>();
             var bret = context.GetCurrentClockRangesBorder(out var earliest, out var latest);
+            if (bret)
+            {
+                if (string.IsNullOrEmpty(userid))
+                {
+                    foreach (var clockinfo in context.WeixinClock)
+                    {
+                        if (clockinfo.Clocktime.Value.IsBetween(earliest, latest))
+                            result.Add(clockinfo);
+                    }
+                }
+                else
+                {
+                    foreach (var clockinfo in context.WeixinClock.Where(p => p.Userid == userid))
+                    {
+                        if (clockinfo.Clocktime.Value.IsBetween(earliest, latest))
+                            result.Add(clockinfo);
+                    }
+                }
+                
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 获取当天考勤记录集合
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public static List<WeixinClock> GetTargetDateClockRecords(this PinhuaContext context, DateTime target, string userid)
+        {
+            var result = new List<WeixinClock>();
+            var bret = context.GetTargetDateClockRangesBorder(target, out var earliest, out var latest);
             if (bret)
             {
                 foreach (var clockinfo in context.WeixinClock.Where(p => p.Userid == userid))
@@ -164,67 +224,6 @@ namespace PHDS.core.Utility
                 }
             }
             return result;
-        }
-
-        public static ClockResult ComputeWeixinClockInfo(this PinhuaContext context, WeixinClock clock)
-        {
-            if (clock == null)
-                throw new NullReferenceException($"{nameof(clock)} 不可为空");
-
-            var ranges = context.GetCurrentClockRanges();
-            if (ranges == null)
-                return null;
-
-            foreach (var range in ranges)
-            {
-                if (clock.Clocktype == (int)Controllers.ClockType.签到)
-                {
-                    range.RangeOfClockIn(out var begin, out var end);
-
-                    if (clock.Clocktime.Value.IsBetween(begin, end))
-                    {
-                        range.RangeOfWorkingTime(out var a, out var b);
-                        TimeSpan t = clock.Clocktime.Value.Subtract(a);
-                        ClockResultEnum result = default(ClockResultEnum);
-                        if (t.Ticks < 0)
-                            result = ClockResultEnum.提前;
-                        if (t.Ticks > 0)
-                            result = ClockResultEnum.迟到;
-
-                        return new ClockResult
-                        {
-                            Type = (Controllers.ClockType)clock.Clocktype.Value,
-                            Result = result,
-                            Minute = Math.Floor(t.Duration().TotalMinutes),
-                            RangeName = range.Name,
-                        };
-                    }
-                }
-                if (clock.Clocktype == (int)Controllers.ClockType.签退)
-                {
-                    range.RangeOfClockOut(out var begin, out var end);
-
-                    if (clock.Clocktime.Value.IsBetween(begin, end))
-                    {
-                        range.RangeOfWorkingTime(out var a, out var b);
-                        TimeSpan t = clock.Clocktime.Value.Subtract(b);
-                        ClockResultEnum result = default(ClockResultEnum);
-                        if (t.Ticks < 0)
-                            result = ClockResultEnum.早退;
-                        if (t.Ticks > 0)
-                            result = ClockResultEnum.延迟;
-
-                        return new ClockResult
-                        {
-                            Type = (Controllers.ClockType)clock.Clocktype.Value,
-                            Result = result,
-                            Minute = Math.Floor(t.Duration().TotalMinutes),
-                            RangeName = range.Name,
-                        };
-                    }
-                }
-            }
-            return null;
         }
     }
 }

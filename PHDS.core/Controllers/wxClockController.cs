@@ -16,6 +16,7 @@ using Senparc.Weixin.HttpUtility;
 using Senparc.Weixin.QY.AdvancedAPIs.MailList;
 using Microsoft.EntityFrameworkCore;
 using System.Data.SqlClient;
+using PHDS.core.Entities;
 
 namespace PHDS.core.Controllers
 {
@@ -122,7 +123,7 @@ namespace PHDS.core.Controllers
         {
             var memberResult = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
             if (memberResult == null)
-                return View("Error");
+                return Redirect(OAuth2Api.GetCode(wxOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex","STATE"));
 
             return View(memberResult);
         }
@@ -131,7 +132,7 @@ namespace PHDS.core.Controllers
         {
             var memberResult = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
             if (memberResult == null)
-                return View("Error");
+                return Redirect(OAuth2Api.GetCode(wxOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex", "STATE"));
 
             return View(memberResult);
         }
@@ -140,16 +141,85 @@ namespace PHDS.core.Controllers
         {
             var memberResult = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
             if (memberResult == null)
-                return View("Error");
+                return Redirect(OAuth2Api.GetCode(wxOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex", "STATE"));
+
+            ViewData[nameof(GetDepartmentListResult)] = GetDepartmentList();
 
             return View(memberResult);
         }
+
+        public IActionResult AjaxGetClockResult(string userid, string date)
+        {
+            var targetDate = DateTime.Parse(date);
+
+            var results = new List<ComputedClockResult>();
+            var ranges = pinhuaContext.GetCurrentClockRanges();
+            ranges.ForEach(p=> {
+                results.Add(new ComputedClockResult
+                {
+                    RangeId = p.Id,
+                    RangeName = p.Name,
+                    ClockInTime = null,
+                    ClockInResult = ClockResultEnum.无记录,
+                    ClockOutTime = null,
+                    ClockOutResult = ClockResultEnum.无记录,
+                    RangeString = p.指定日期的工作时间区间转文字(targetDate),
+                });
+            });
+            
+
+            var clocks = pinhuaContext.GetTargetDateClockRecords(targetDate, userid).OrderBy(p => p.Clocktime);
+
+            foreach (var range in ranges.OrderBy(p => p.Id))
+            {
+                foreach(var clock in clocks)
+                {
+                    if(clock.Clocktype == (int)ClockType.签到)
+                    {
+                        range.指定日期的签到区间(targetDate, out var begin, out var end);
+                        if (clock.Clocktime.Value.IsBetween(begin, end))
+                        {
+                            range.指定日期的工作时间区间(targetDate, out var a, out var b);
+                            var t = clock.Clocktime.Value.Subtract(b);
+                            results.ForEach(p =>
+                            {
+                                if (p.RangeId == range.Id)
+                                {
+                                    p.ClockInTime = clock.Clocktime;
+                                    p.ClockInResult = t.Ticks > 0 ? ClockResultEnum.迟到 : ClockResultEnum.正常;
+                                }
+                            });
+                        }
+                    }
+                    if(clock.Clocktype == (int)ClockType.签退)
+                    {
+                        range.指定日期的签退区间(targetDate, out var begin, out var end);
+                        if (clock.Clocktime.Value.IsBetween(begin, end))
+                        {
+                            range.指定日期的工作时间区间(targetDate, out var a, out var b);
+                            var t = clock.Clocktime.Value.Subtract(b);
+                            results.ForEach(p =>
+                            {
+                                if (p.RangeId == range.Id)
+                                {
+                                    p.ClockOutTime = clock.Clocktime;
+                                    p.ClockOutResult = t.Ticks < 0 ? ClockResultEnum.早退 : ClockResultEnum.正常;
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            return Json(results);
+        }
+
         public IActionResult Error()
         {
             return View();
         }
 
-        private bool CheckClockIn(GetMemberResult member ,ClockType type, out List<string> errors)
+        private bool CheckClockIn(GetMemberResult member, ClockType type, out List<string> errors)
         {
             var b = true;
             errors = new List<string>();
@@ -169,7 +239,7 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfClockIn(out var t1, out var t2);
+                planDetail.今天的签到区间(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
                     errors.Add($"{planDetail.Name}的{sType}时间是 {t1.ToShortTimeString()}～{t2.ToShortTimeString()}");
@@ -183,13 +253,13 @@ namespace PHDS.core.Controllers
                     errors.Add($"当前班段 {r.FirstOrDefault().Clocktime.Value.ToShortTimeString()} 已经有过{sType}记录，请勿重复打卡！");
                     b = false;
                 }
-  
+
             }
 
             return b;
         }
 
-        private bool CheckClockOut(GetMemberResult member   ,ClockType type, out List<string> errors)
+        private bool CheckClockOut(GetMemberResult member, ClockType type, out List<string> errors)
         {
             var b = true;
             errors = new List<string>();
@@ -209,7 +279,7 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                planDetail.RangeOfClockOut(out var t1, out var t2);
+                planDetail.今天的签退区间(out var t1, out var t2);
                 if (!DateTime.Now.IsBetween(t1, t2))
                 {
                     errors.Add($"{planDetail.Name}的{sType}时间是 {t1.ToShortTimeString()}～{t2.ToShortTimeString()}");
@@ -264,6 +334,22 @@ namespace PHDS.core.Controllers
                 return true;
             else
                 return false;
+        }
+
+        private GetDepartmentListResult GetDepartmentList()
+        {
+            var tokenResult = CommonApi.GetToken(wxOptions.CorpId, wxOptions.Secret);
+            return MailListApi.GetDepartmentList(tokenResult.access_token);
+        }
+
+        public IActionResult Top10()
+        {
+            return View();
+        }
+
+        public IActionResult Declaration()
+        {
+            return View();
         }
     }
     public enum ClockType
