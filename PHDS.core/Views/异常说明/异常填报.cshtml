@@ -1,0 +1,59 @@
+﻿@model PHDS.core.Entities.Pinhua.Wx异常说明
+@{
+    Layout = "_Layout_weui";
+    ViewData["Title"] = "异常填报";
+
+}
+
+<div class="" id="app">
+    <form action="@(Url.Action<异常说明Controller>(p => p.异常填报()))" method="post">
+        <div class="weui-cells__title">选择异常类型</div>
+        <div class="weui-cells weui-cells_checkbox">
+            <label class="weui-cell weui-check__label" for="x11">
+                <div class="weui-cell__hd weui-label">
+                    <input type="radio" class="weui-check" name="类型" id="x11" value="1" checked="checked">
+                    <span class="weui-icon-checked"></span>
+                </div>
+                <div class="weui-cell__bd">
+                    <p>未签到</p>
+                </div>
+            </label>
+            <label class="weui-cell weui-check__label" for="x12">
+                <div class="weui-cell__hd weui-label">
+                    <input type="radio" class="weui-check" name="类型" id="x12" value="0">
+                    <span class="weui-icon-checked"></span>
+                </div>
+                <div class="weui-cell__bd">
+                    <p>未签退</p>
+                </div>
+            </label>
+        </div>
+        <div class="weui-cells__title">希望修正的信息</div>
+        <div class="weui-cells">
+            <div class="weui-cell">
+                <div class="weui-cell__hd"><label for="time" class="weui-label">打卡时间</label></div>
+                <div class="weui-cell__bd">
+                    <input class="weui-input" id="time" type="text" name="时间" value="@Html.ValueFor(p=>p.时间)" readonly="">
+                </div>
+            </div>
+        </div>
+        <div class="weui-cells__title">原因说明</div>
+        <div class="weui-cells weui-cells_form">
+            <div class="weui-cell">
+                <div class="weui-cell__bd">
+                    <textarea class="weui-textarea" placeholder="请输入文本" rows="3" name="原因"></textarea>
+                    <div class="weui-textarea-counter"><span>0</span>/200</div>
+                </div>
+            </div>
+        </div>
+        <div class="weui-btn-area">
+            <button type="submit" class="weui-btn weui-btn_primary" id="showTooltips">确定</button>
+            <a href="@Url.Action("Index","WxClock", new { member = AppSessions.GetMemberString() })" class="weui-btn weui-btn_warn">返回</a>
+        </div>
+    </form>
+</div>
+@section Scripts{
+    <script>
+        $("#time").datetimePicker();
+    </script>
+}

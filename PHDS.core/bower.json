@@ -4,10 +4,14 @@
   "dependencies": {
     "bootstrap": "3.3.7",
     "jquery": "2.2.0",
-    "jquery-validation": "1.14.0",
+    "jquery-validation": "1.16.0",
     "jquery-validation-unobtrusive": "3.2.6",
     "font-awesome": "Font-Awesome#v4.7.0",
     "jquery-weui": "v1.0.1",
-    "vue": "v2.2.4"
+    "vue": "v2.3.0"
+  },
+  "resolutions": {
+    "vue": "v2.3.0",
+    "jquery-validation": "1.16.0"
   }
 }

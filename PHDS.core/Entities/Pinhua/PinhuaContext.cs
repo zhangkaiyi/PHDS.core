@@ -123,6 +123,7 @@ namespace PHDS.core.Entities.Pinhua
         public virtual DbSet<WeixinOptions> WeixinOptions { get; set; }
         public virtual DbSet<WeixinWorkPlan> WeixinWorkPlan { get; set; }
         public virtual DbSet<WeixinWorkPlanDetail> WeixinWorkPlanDetail { get; set; }
+        public virtual DbSet<Wx异常说明> Wx异常说明 { get; set; }
         public virtual DbSet<业务类型> 业务类型 { get; set; }
         public virtual DbSet<人员档案> 人员档案 { get; set; }
         public virtual DbSet<付款单> 付款单 { get; set; }
@@ -4530,6 +4531,54 @@ namespace PHDS.core.Entities.Pinhua
                     .HasMaxLength(20);
 
                 entity.Property(e => e.Name).HasMaxLength(100);
+
+                entity.Property(e => e.休息开始时间).HasColumnType("datetime");
+
+                entity.Property(e => e.休息结束时间).HasColumnType("datetime");
+
+                entity.Property(e => e.延迟算加班).HasMaxLength(20);
+
+                entity.Property(e => e.必须打上班卡).HasMaxLength(20);
+
+                entity.Property(e => e.必须打下班卡).HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<Wx异常说明>(entity =>
+            {
+                entity.HasIndex(e => new { e.ExcelServerRcid, e.ExcelServerWiid })
+                    .HasName("idx1");
+
+                entity.Property(e => e.ExcelServerChg).HasColumnName("ExcelServerCHG");
+
+                entity.Property(e => e.ExcelServerCn).HasColumnName("ExcelServerCN");
+
+                entity.Property(e => e.ExcelServerRc1)
+                    .HasColumnName("ExcelServerRC1")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.ExcelServerRcid)
+                    .HasColumnName("ExcelServerRCID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.ExcelServerRn).HasColumnName("ExcelServerRN");
+
+                entity.Property(e => e.ExcelServerRtid)
+                    .HasColumnName("ExcelServerRTID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.ExcelServerWiid)
+                    .HasColumnName("ExcelServerWIID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.原因).HasMaxLength(500);
+
+                entity.Property(e => e.填报日期).HasColumnType("datetime");
+
+                entity.Property(e => e.姓名).HasMaxLength(100);
+
+                entity.Property(e => e.时间).HasColumnType("datetime");
+
+                entity.Property(e => e.用户号).HasMaxLength(100);
             });
 
             modelBuilder.Entity<业务类型>(entity =>
@@ -5118,7 +5167,7 @@ namespace PHDS.core.Entities.Pinhua
             modelBuilder.Entity<打卡登记>(entity =>
             {
                 entity.HasKey(e => e.Pk)
-                    .HasName("PK_打卡登记");
+                    .HasName("pk_110");
 
                 entity.HasIndex(e => new { e.ExcelServerRcid, e.ExcelServerWiid })
                     .HasName("idx1");
@@ -5670,7 +5719,7 @@ namespace PHDS.core.Entities.Pinhua
             modelBuilder.Entity<考勤卡号变动>(entity =>
             {
                 entity.HasKey(e => e.Pk)
-                    .HasName("PK_考勤卡号变动");
+                    .HasName("pk_71");
 
                 entity.HasIndex(e => new { e.ExcelServerRcid, e.ExcelServerWiid })
                     .HasName("idx1");

@@ -55,34 +55,13 @@ namespace PHDS.core.Controllers
             //自定义MessageHandler，对微信请求的详细判断操作都在这里面。
             var memoryStream = new MemoryStream();
             Request.Body.CopyTo(memoryStream);
+            //var messageHandler = new QyMyMessageHandler(memoryStream, postModel, maxRecordCount);
             var messageHandler = new QyMyMessageHandler(memoryStream, postModel, maxRecordCount);
             //执行微信处理过程
             messageHandler.Execute();
             //自动返回加密后结果
             return new FixWeixinBugWeixinResult(messageHandler);//为了解决官方微信5.0软件换行bug暂时添加的方法，平时用下面一个方法即可
 
-        }
-
-        /// <summary>
-        /// 这是一个最简洁的过程演示
-        /// </summary>
-        /// <param name="postModel"></param>
-        /// <returns></returns>
-        [HttpPost]
-        public IActionResult MiniPost(PostModel postModel)
-        {
-            var maxRecordCount = 10;
-
-            postModel.Token = Token;
-            postModel.EncodingAESKey = EncodingAESKey;
-            postModel.CorpId = CorpId;
-
-            //自定义MessageHandler，对微信请求的详细判断操作都在这里面。
-            var messageHandler = new QyCustomMessageHandler(Request.Body, postModel, maxRecordCount);
-            //执行微信处理过程
-            messageHandler.Execute();
-            //自动返回加密后结果
-            return new FixWeixinBugWeixinResult(messageHandler);
         }
     }
 

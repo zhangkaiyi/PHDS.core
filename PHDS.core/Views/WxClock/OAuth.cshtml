@@ -4,9 +4,8 @@
 
 @{
     ViewData["Title"] = "打卡";
-    var memberResult = ViewData["Member"] as GetMemberResult;
-    var currentWorkTime = PinhuaContext.GetCurrentWorkingRange();
-    Context.Session.SetString("memberResult", Newtonsoft.Json.JsonConvert.SerializeObject(memberResult));
+    //var memberResult = ViewData["Member"] as GetMemberResult;
+    var currentWorkTime = PinhuaContext.GetCurrentClockRange();
 }
 <div class="row text-center bg-primary" style="font-size:22px;padding:30px 0px 30px 0px">
     <p><i class="fa fa-clock-o"></i> <span id="current-time"></span></p>
@@ -18,19 +17,19 @@
         else
         {
             <div>
-                @if (currentWorkTime.IsRangeOfBegin())
+                @if (currentWorkTime.IsRangeOfClockIn())
                 {
                     <a asp-action="ClockIn" class="btn btn-success"><i class="fa fa-arrow-up"></i> @(currentWorkTime.Name)上班</a>
                 }
-                else if (currentWorkTime.IsRangeOfEnd())
+                else if (currentWorkTime.IsRangeOfClockOut())
                 {
                     <a asp-action="ClockOut" class="btn btn-danger"><i class="fa fa-arrow-down"></i> @(currentWorkTime.Name)下班</a>
                 }
                 else
                 {
                     <p>非打卡时间</p>
-                    <p>上班卡：@currentWorkTime.ToBeginRangeString()</p>
-                    <p>下班卡：@currentWorkTime.ToEndRangeString()</p>
+                    <p>上班卡：@currentWorkTime.ToRangeString()</p>
+                    <p>下班卡：@currentWorkTime.ToRangeString()</p>
                 }
             </div>
         }
@@ -48,9 +47,9 @@
 }
 <div class="alert alert-danger" style="padding:0" role="alert">
     <table id="table1" class="table">
-        <tr><td class="col-xs-4">用户号</td><td>@memberResult?.userid</td></tr>
-        <tr><td>姓名</td><td>@memberResult?.name</td></tr>
-        <tr><td>部门</td><td>@GetMemberDepartments(memberResult?.department)</td></tr>
+        <tr><td class="col-xs-4">用户号</td><td>@AppSessions.GetMember()?.userid</td></tr>
+        <tr><td>姓名</td><td>@AppSessions.GetMember()?.name</td></tr>
+        <tr><td>部门</td><td>@GetMemberDepartments(@AppSessions.GetMember()?.department)</td></tr>
         <tr>
             <td class="col-xs-4">公司网络</td>
             <td>@(PinhuaContext.IsInternalNetwork() ? Html.Raw("是") : Html.Raw("否"))</td>
@@ -62,7 +61,7 @@
         <tr>
             <td>上班卡</td>
             <td>
-                @currentWorkTime?.ToBeginRangeString() @if (currentWorkTime.IsRangeOfBegin())
+                @currentWorkTime?.ToRangeString() @if (currentWorkTime.IsRangeOfClockIn())
                 {
                     <i class="fa fa-check"></i>
                 }
@@ -75,7 +74,7 @@
         <tr>
             <td>下班卡</td>
             <td>
-                @currentWorkTime?.ToEndRangeString() @if (currentWorkTime.IsRangeOfEnd())
+                @currentWorkTime?.ToRangeString() @if (currentWorkTime.IsRangeOfClockOut())
             {
                     <i class="fa fa-check"></i>
                 }

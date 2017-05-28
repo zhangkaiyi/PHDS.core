@@ -1,0 +1,32 @@
+﻿@{
+    Layout = "_Layout_weui";
+    ViewData["Title"] = "异常说明成功";
+
+}
+
+<div class="" id="app">
+    <div class="weui-msg">
+        <div class="weui-msg__icon-area"><i class="weui-icon-success weui-icon_msg"></i></div>
+        <div class="weui-msg__text-area">
+            <h2 class="weui-msg__title">填报成功</h2>
+            <p class="weui-msg__desc">您的请求已经记录，请耐心等待。</p>
+        </div>
+        <div class="weui-msg__opr-area">
+            <p class="weui-btn-area">
+                <a href="@(Url.Action<异常说明Controller>(p => p.异常填报()))" class="weui-btn weui-btn_primary">继续填报</a>
+                <a href="@(Url.Action<WxClockController>(p => p.Index(null)))" class="weui-btn weui-btn_default">返回首页</a>
+            </p>
+        </div>
+        <div class="weui-msg__extra-area">
+            <div class="weui-footer">
+                <p class="weui-footer__links">
+                    <a href="javascript:void(0);" class="weui-footer__link">拼花大师</a>
+                </p>
+                <p class="weui-footer__text">Copyright © 2011-2017 pinhuadashi.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+
+}

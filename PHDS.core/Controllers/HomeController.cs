@@ -72,7 +72,7 @@ namespace PHDS.core.Controllers
             }
             else
             {
-                ViewData["Member"] = MailListApi.GetMember(tokenResult.access_token, openInfo.UserId);
+                //ViewData["Member"] = MailListApi.GetMember(tokenResult.access_token, openInfo.UserId);
                 ViewData["DepartmentList"] = MailListApi.GetDepartmentList(tokenResult.access_token);
             }
             

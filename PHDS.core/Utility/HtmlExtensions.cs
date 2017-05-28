@@ -81,7 +81,16 @@ namespace Microsoft.AspNetCore.Mvc.Rendering
             foreach (var argumentParameterPair in pairs)
             {
                 string name = argumentParameterPair.ParamName;
-                object value = ((ConstantExpression)argumentParameterPair.Argument).Value;
+                object value = null;
+                if (argumentParameterPair.Argument is MethodCallExpression)
+                {
+                    var subcall = (MethodCallExpression)argumentParameterPair.Argument;
+                    var func = Expression.Lambda(subcall).Compile();
+                    //object[] subargs =
+                    value = func.DynamicInvoke(null);
+                }
+                else
+                    value = ((ConstantExpression)argumentParameterPair.Argument).Value;
                 if (value != null)
                 {
                     var valueType = value.GetType();
@@ -94,12 +103,73 @@ namespace Microsoft.AspNetCore.Mvc.Rendering
             }
             return routeValues;
         }
+        private static RouteValueDictionary GetRouteValues2(MethodCallExpression call)
+        {
+            var routeValues = new RouteValueDictionary();
+
+            var args = call.Arguments;
+            ParameterInfo[] parameters = call.Method.GetParameters();
+            var pairs = args.Select((a, i) => new
+            {
+                Argument = a,
+                ParamName = parameters[i].Name
+            });
+            foreach (var argumentParameterPair in pairs)
+            {
+                string name = argumentParameterPair.ParamName;
+                object value = Run(call);
+                if (value != null)
+                {
+                    var valueType = value.GetType();
+                    if (valueType.GetTypeInfo().IsValueType || valueType == typeof(string))
+                    {
+                        routeValues.Add(name, value);
+                    }
+                    else throw new NotSupportedException($"unsoupported parameter type {valueType.ToString()}");
+                }
+            }
+            return routeValues;
+        }
+        private static object Run(MethodCallExpression call)
+        {
+            object value = null;
+
+            foreach (var Argument in call.Arguments)
+            {
+                if (Argument is MethodCallExpression)
+                {
+                    var subcall = (MethodCallExpression)Argument;
+                    var objs = new List<object>();
+                    foreach (var arg in subcall.Arguments)
+                    {
+                        if (arg is ConstantExpression)
+                        {
+                            var x = ((ConstantExpression)arg).Value;
+                            objs.Add(x);
+                        }
+                        else if (arg is MethodCallExpression)
+                        {
+                            var x = Run((MethodCallExpression)arg);
+                            var y = (MethodCallExpression)arg;
+                            objs.Add(y.Method.Invoke(null,new object[] { x }));
+                        }
+                    }
+                    object[] a = objs.ToArray();
+                    //var func = Expression.Lambda(subcall).Compile();
+                    //value = func.DynamicInvoke();
+                    value = subcall.Method.Invoke(null, a);
+                }
+                else
+                    value = ((ConstantExpression)Argument).Value;
+            }
+            return value;
+        }
 
         public static string Action<TController>(this IUrlHelper url, Expression<Func<TController, IActionResult>> actionSelector, string protocol = null, string hostname = null)
         {
             var action = GetActionName((MethodCallExpression)actionSelector.Body);
             var controller = GetControllerName(typeof(TController));
-            var routeValues = GetRouteValues((MethodCallExpression)actionSelector.Body);
+            var routeValues = GetRouteValues2((MethodCallExpression)actionSelector.Body);
 
             return url.Action(action, controller, routeValues, protocol, hostname);
         }

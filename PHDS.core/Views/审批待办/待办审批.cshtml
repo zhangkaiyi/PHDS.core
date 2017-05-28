@@ -1,0 +1,134 @@
+﻿@model List<PHDS.core.Entities.Pinhua.Wx异常说明>
+
+@{
+    Layout = "_Layout_weui";
+    ViewData["Title"] = "异常声明";
+
+}
+
+<div class="" id="app">
+    <div class="weui-tab">
+        <div class="weui-navbar">
+            <a class="weui-navbar__item weui-bar__item--on" href="#tab1">
+                待办申请 (@Model.Where(p=>p.是否处理 == 0).Count())
+            </a>
+            <a class="weui-navbar__item" href="#tab2">
+                已拒绝 (@Model.Where(p => p.是否处理 == 2).Count())
+            </a>
+            <a class="weui-navbar__item" href="#tab3">
+                已通过 (@Model.Where(p => p.是否处理 == 1).Count())
+            </a>
+        </div>
+        <div class="weui-tab__bd">
+            <div id="tab1" class="weui-tab__bd-item weui-tab__bd-item--active">
+                @foreach (var item in Model.Where(p=>p.是否处理 == 0))
+                {
+                    <div class="weui-form-preview">
+                        <form id="@item.ExcelServerRcid" method="post">
+                            <div class="weui-form-preview__hd">
+                                <label class="weui-form-preview__label">异常说明</label>
+                                <em class="weui-form-preview__value">@((Enum异常说明类型)item.类型)</em>
+                            </div>
+                            <div class="weui-form-preview__bd">
+                                <div class="weui-form-preview__item">
+                                    <label class="weui-form-preview__label">姓名</label>
+                                    <span class="weui-form-preview__value">@item.姓名</span>
+                                </div>
+                                <div class="weui-form-preview__item">
+                                    <label class="weui-form-preview__label">时间</label>
+                                    <span class="weui-form-preview__value">@item.时间</span>
+                                </div>
+                                <div class="weui-form-preview__item">
+                                    <label class="weui-form-preview__label">原因</label>
+                                    <span class="weui-form-preview__value">@item.原因</span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="ExcelServerRcid" value="@item.ExcelServerRcid" />
+                        </form>
+                        <div class="weui-form-preview__ft">
+                            <a class="weui-form-preview__btn weui-form-preview__btn_default" href="javascript:$('#@item.ExcelServerRcid').prop('action','DisAgree');$('#@item.ExcelServerRcid').submit();">拒绝</a>
+                            <a class="weui-form-preview__btn weui-form-preview__btn_primary" href="javascript:$('#@item.ExcelServerRcid').prop('action','Agree');$('#@item.ExcelServerRcid').submit();">通过</a>
+                        </div>
+                    </div>
+                    <br />
+                }
+            </div>
+            <div id="tab2" class="weui-tab__bd-item">
+                @foreach (var item in Model.Where(p => p.是否处理 == 2))
+                {
+                    <div class="weui-form-preview">
+                        <form id="@item.ExcelServerRcid" method="post">
+                            <div class="weui-form-preview__hd">
+                                <label class="weui-form-preview__label">异常说明</label>
+                                <em class="weui-form-preview__value">@((Enum异常说明类型)item.类型)</em>
+                            </div>
+                            <div class="weui-form-preview__bd">
+                                <div class="weui-form-preview__item">
+                                    <label class="weui-form-preview__label">姓名</label>
+                                    <span class="weui-form-preview__value">@item.姓名</span>
+                                </div>
+                                <div class="weui-form-preview__item">
+                                    <label class="weui-form-preview__label">时间</label>
+                                    <span class="weui-form-preview__value">@item.时间</span>
+                                </div>
+                                <div class="weui-form-preview__item">
+                                    <label class="weui-form-preview__label">原因</label>
+                                    <span class="weui-form-preview__value">@item.原因</span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="ExcelServerRcid" value="@item.ExcelServerRcid" />
+                        </form>
+                        @*<div class="weui-form-preview__ft">
+                            <a class="weui-form-preview__btn weui-form-preview__btn_default" href="javascript:$('#@item.ExcelServerRcid').prop('action','DisAgree');$('#@item.ExcelServerRcid').submit();">拒绝</a>
+                            <a class="weui-form-preview__btn weui-form-preview__btn_primary" href="javascript:$('#@item.ExcelServerRcid').prop('action','Agree');$('#@item.ExcelServerRcid').submit();">通过</a>
+                        </div>*@
+                    </div>
+                    <br />
+                }
+            </div>
+            <div id="tab3" class="weui-tab__bd-item">
+                @foreach (var item in Model.Where(p => p.是否处理 == 1))
+                {
+                    <div class="weui-form-preview">
+                        <form id="@item.ExcelServerRcid" method="post">
+                            <div class="weui-form-preview__hd">
+                                <label class="weui-form-preview__label">异常说明</label>
+                                <em class="weui-form-preview__value">@((Enum异常说明类型)item.类型)</em>
+                            </div>
+                            <div class="weui-form-preview__bd">
+                                <div class="weui-form-preview__item">
+                                    <label class="weui-form-preview__label">姓名</label>
+                                    <span class="weui-form-preview__value">@item.姓名</span>
+                                </div>
+                                <div class="weui-form-preview__item">
+                                    <label class="weui-form-preview__label">时间</label>
+                                    <span class="weui-form-preview__value">@item.时间</span>
+                                </div>
+                                <div class="weui-form-preview__item">
+                                    <label class="weui-form-preview__label">原因</label>
+                                    <span class="weui-form-preview__value">@item.原因</span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="ExcelServerRcid" value="@item.ExcelServerRcid" />
+                        </form>
+                        @*<div class="weui-form-preview__ft">
+                            <a class="weui-form-preview__btn weui-form-preview__btn_default" href="javascript:$('#@item.ExcelServerRcid').prop('action','DisAgree');$('#@item.ExcelServerRcid').submit();">拒绝</a>
+                            <a class="weui-form-preview__btn weui-form-preview__btn_primary" href="javascript:$('#@item.ExcelServerRcid').prop('action','Agree');$('#@item.ExcelServerRcid').submit();">通过</a>
+                        </div>*@
+                    </div>
+                    <br />
+                }
+            </div>
+        </div>
+    </div>
+    <div class="weui-btn-area">
+        <a href="@Url.Action("Index","WxClock", new { member = AppSessions.GetMemberString() })" class="weui-btn weui-btn_warn">返回</a>
+    </div>
+    
+
+</div>
+@section Scripts{
+    <script>
+        $("#time").datetimePicker();
+    </script>
+}

@@ -18,5 +18,12 @@ namespace PHDS.core.Entities.Pinhua
         public string ExcelServerRtid { get; set; }
         public int? ExcelServerChg { get; set; }
         public int Id { get; set; }
+        public DateTime? 休息开始时间 { get; set; }
+        public DateTime? 休息结束时间 { get; set; }
+        public int? 中途休息 { get; set; }
+        public string 必须打上班卡 { get; set; }
+        public string 必须打下班卡 { get; set; }
+        public string 延迟算加班 { get; set; }
+        public int? RangeId { get; set; }
     }
 }

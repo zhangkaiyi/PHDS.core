@@ -2,8 +2,8 @@
 @using PHDS.core.Entities.Pinhua
 @using PHDS.core.Utility
 @{
-    ViewData["Title"] = "下班打卡";
-    var memberResult = Newtonsoft.Json.JsonConvert.DeserializeObject<Senparc.Weixin.QY.AdvancedAPIs.MailList.GetMemberResult>(Context.Session.GetString("memberResult"));
+    ViewData["Title"] = "打卡结果";
+    var memberResult = AppSessions.GetMember();
     var currentWorkTime = PinhuaContext.GetCurrentClockRange();
 }
 

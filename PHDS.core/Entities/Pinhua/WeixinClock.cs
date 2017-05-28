@@ -19,5 +19,6 @@ namespace PHDS.core.Entities.Pinhua
         public string ExcelServerRtid { get; set; }
         public int? ExcelServerChg { get; set; }
         public string ClockPlanId { get; set; }
+        public int? ClockRangeId { get; set; }
     }
 }

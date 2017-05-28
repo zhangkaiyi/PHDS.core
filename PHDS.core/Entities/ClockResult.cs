@@ -66,4 +66,38 @@ namespace PHDS.core.Entities
         迟到,
         早退,
     }
+
+    public class ClockComputeModel
+    {
+        public int year { get; set; }
+        public int month { get; set; }
+        public List<ClockComputeUserModel> users { get; set; }
+    }
+
+    public class ClockComputeUserModel
+    {
+        public string userid { get; set; }
+        public string name { get; set; }
+        public List<ClockComputeResultModel> results { get; set; }
+    }
+
+    public class ClockComputeResultModel
+    {
+        [JsonConverter(typeof(ChinaDateTimeConverter))]
+        public DateTime date { get; set; }
+        public decimal totalHours { get; set; }
+
+        public List<ClockComputeDetailModel> details { get; set; }
+    }
+
+    public class ClockComputeDetailModel
+    {
+        public string range { get; set; }
+        public string time1 { get; set; }
+        public string time1fix { get; set; }
+        public string time2 { get; set; }
+        public string time2fix { get; set; }
+        public decimal hours { get; set; }
+        public string state { get; set; }
+    }
 }

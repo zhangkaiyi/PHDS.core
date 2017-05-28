@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using PHDS.core.Entities.Pinhua;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Http;
+using Zky.Utility;
 
 namespace PHDS.core
 {
@@ -59,7 +60,8 @@ namespace PHDS.core
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseDeveloperExceptionPage();
+                //app.UseExceptionHandler("/Home/Error");
             }
 
             app.UseStaticFiles();
@@ -73,7 +75,7 @@ namespace PHDS.core
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
 
-            Utility.HttpContext.ServiceProvider = serviceProvider;
+            app.UseStaticHttpContext();
         }
     }
 }

@@ -1,0 +1,54 @@
+﻿@model PHDS.core.Entities.ClockComputeModel
+@using Senparc.Weixin.QY.AdvancedAPIs.MailList
+@using PHDS.core.Utility
+@using PHDS.core.Entities.Pinhua
+@using System.Data.SqlClient
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "考勤报表";
+}
+
+<div class="" id="app" v-cloak>
+    <div class="table-responsive">
+        <table class="talbe table-striped" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>TotalHours</th>
+                    <th>Time1</th>
+                    <th>Time2</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.users) 
+                {
+                    @foreach (var result in user.results)
+                    {
+                        <tr>
+                            @*<td>@user.userid</td>*@
+                            <td>@user.name</td>
+                            <td>@result.date.ToString("yyyy-MM-dd")</td>
+                            <td>@result.totalHours</td>
+                            @foreach(var detail in result.details)
+                            {
+                                <td>@detail.time1fix</td>
+                                <td>@detail.time2fix</td>
+                                <td>@detail.hours</td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section styles{
+    <style>
+        td{
+            white-space:nowrap
+        }
+    </style>
+}

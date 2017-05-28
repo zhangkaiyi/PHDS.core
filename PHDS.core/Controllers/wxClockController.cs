@@ -20,17 +20,10 @@ using PHDS.core.Entities;
 
 namespace PHDS.core.Controllers
 {
-    public class WxClockController : Controller
+    public class WxClockController : AController
     {
-        public WeixinOptions wxOptions;
-        public WeixinClockOptions clockOptions;
-        public PinhuaContext pinhuaContext;
-
-        public WxClockController(Entities.Pinhua.PinhuaContext pinhuaContext)
+        public WxClockController(PinhuaContext pinhuaContext) : base(pinhuaContext)
         {
-            this.pinhuaContext = pinhuaContext;
-            this.wxOptions = pinhuaContext.WeixinOptions.FirstOrDefault();
-            this.clockOptions = pinhuaContext.WeixinClockOptions.FirstOrDefault();
         }
 
         public IActionResult OAuth(string code, string state, string returnUrl)
@@ -41,7 +34,7 @@ namespace PHDS.core.Controllers
                 return View();
             }
 
-            var tokenResult = CommonApi.GetToken(wxOptions.CorpId, wxOptions.Secret);
+            var tokenResult = CommonApi.GetToken(WeixinOptions.CorpId, WeixinOptions.Secret);
 
             if (!(tokenResult.errcode == Senparc.Weixin.ReturnCode_QY.请求成功))
             {
@@ -70,9 +63,8 @@ namespace PHDS.core.Controllers
                     return View();
                 else
                 {
-                    var memberString = JsonConvert.SerializeObject(memberResult);
-                    var memberParam = $"?member={memberString.UrlEncode()}";
-                    return Redirect(returnUrl + memberParam);
+                    AppSessions.SetMember(memberResult);
+                    return RedirectToAction(nameof(Index));
                 }
             }
 
@@ -81,28 +73,38 @@ namespace PHDS.core.Controllers
 
         public IActionResult Index(string member)
         {
-            if (string.IsNullOrEmpty(member))
+            var memberResult = new GetMemberResult();
+
+            if (!string.IsNullOrEmpty(member))
             {
-                ViewData["Message"] = "人员信息不存在！";
-                return View();
+                var memberJson = member.UrlDecode();
+                memberResult = JsonConvert.DeserializeObject<GetMemberResult>(memberJson);
             }
-            var memberJson = member.UrlDecode();
-            var memberResult = JsonConvert.DeserializeObject<GetMemberResult>(memberJson);
+            else
+            {
+                memberResult = AppSessions.GetMember();
+                if (memberResult == null)
+                {
+                    ViewData["Message"] = "人员信息不存在！";
+                    return View();
+                }
+            }
+            
             if (string.IsNullOrEmpty(memberResult.userid))
             {
                 ViewData["Message"] = "人员信息无效！";
                 return View();
             }
 
-            HttpContext.Session.SetObjectAsJson("memberResult", memberResult);
+            AppSessions.SetMember(memberResult);
             return View(memberResult);
         }
 
         public IActionResult ClockIn(GetMemberResult member)
         {
-            var b = CheckClockIn(member, ClockType.签到, out var errors);
+            var b = CheckClockIn(member, Enum打卡类型.签到, out var errors);
             if (b)
-                if (!InsertWeixinClock(ClockType.签到, member))
+                if (!InsertWeixinClock(Enum打卡类型.签到, member))
                 {
                     errors.Add("数据库操作失败");
                 }
@@ -110,9 +112,9 @@ namespace PHDS.core.Controllers
         }
         public IActionResult ClockOut(GetMemberResult member)
         {
-            var b = CheckClockOut(member, ClockType.签退, out var errors);
+            var b = CheckClockOut(member, Enum打卡类型.签退, out var errors);
             if (b)
-                if (!InsertWeixinClock(ClockType.签退, member))
+                if (!InsertWeixinClock(Enum打卡类型.签退, member))
                 {
                     errors.Add("数据库操作失败");
                 }
@@ -121,31 +123,36 @@ namespace PHDS.core.Controllers
 
         public IActionResult Tab2()
         {
-            var memberResult = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
+            var memberResult = AppSessions.GetMember();
             if (memberResult == null)
-                return Redirect(OAuth2Api.GetCode(wxOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex","STATE"));
+                return Redirect(OAuth2Api.GetCode(WeixinOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex","STATE"));
 
             return View(memberResult);
         }
 
         public IActionResult Tab3()
         {
-            var memberResult = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
+            var memberResult = AppSessions.GetMember();
             if (memberResult == null)
-                return Redirect(OAuth2Api.GetCode(wxOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex", "STATE"));
+                return Redirect(OAuth2Api.GetCode(WeixinOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex", "STATE"));
 
             return View(memberResult);
         }
 
         public IActionResult Tab4()
         {
-            var memberResult = HttpContext.Session.GetObjectFromJson<GetMemberResult>("memberResult");
+            var memberResult = AppSessions.GetMember();
             if (memberResult == null)
-                return Redirect(OAuth2Api.GetCode(wxOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex", "STATE"));
+                return Redirect(OAuth2Api.GetCode(WeixinOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex", "STATE"));
 
             ViewData[nameof(GetDepartmentListResult)] = GetDepartmentList();
 
             return View(memberResult);
+        }
+
+        public IActionResult Report()
+        {
+            return View(ComputeClockMonthReport(2017, 4));
         }
 
         public IActionResult AjaxGetClockResult(string userid, string date)
@@ -168,13 +175,13 @@ namespace PHDS.core.Controllers
             });
             
 
-            var clocks = pinhuaContext.GetTargetDateClockRecords(targetDate, userid).OrderBy(p => p.Clocktime);
+            var clocks = pinhuaContext.GetTargetDateTargetUserClockRecords(targetDate, userid).OrderBy(p => p.Clocktime);
 
             foreach (var range in ranges.OrderBy(p => p.Id))
             {
                 foreach(var clock in clocks)
                 {
-                    if(clock.Clocktype == (int)ClockType.签到)
+                    if(clock.Clocktype == (int)Enum打卡类型.签到)
                     {
                         range.指定日期的签到区间(targetDate, out var begin, out var end);
                         if (clock.Clocktime.Value.IsBetween(begin, end))
@@ -191,7 +198,7 @@ namespace PHDS.core.Controllers
                             });
                         }
                     }
-                    if(clock.Clocktype == (int)ClockType.签退)
+                    if(clock.Clocktype == (int)Enum打卡类型.签退)
                     {
                         range.指定日期的签退区间(targetDate, out var begin, out var end);
                         if (clock.Clocktime.Value.IsBetween(begin, end))
@@ -214,20 +221,15 @@ namespace PHDS.core.Controllers
             return Json(results);
         }
 
-        public IActionResult Error()
-        {
-            return View();
-        }
-
-        private bool CheckClockIn(GetMemberResult member, ClockType type, out List<string> errors)
+        private bool CheckClockIn(GetMemberResult member, Enum打卡类型 type, out List<string> errors)
         {
             var b = true;
             errors = new List<string>();
             var sType = "签到";
 
-            if (pinhuaContext.WeixinClockOptions.FirstOrDefault().Ip != HttpContext.Connection.RemoteIpAddress.ToString())
+            if (!pinhuaContext.IsInternalNetwork())
             {
-                errors.Add("非公司网络");
+                errors.Add($"你的IP地址为 {pinhuaContext.ClientIp()} ,非公司网络");
                 b = false;
             }
 
@@ -246,7 +248,7 @@ namespace PHDS.core.Controllers
                     b = false;
                 }
                 var r = from p in pinhuaContext.WeixinClock
-                        where p.Userid == member.userid && p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)ClockType.签到
+                        where p.Userid == member.userid && p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)Enum打卡类型.签到
                         select p;
                 if (r.Count() > 0)
                 {
@@ -259,15 +261,15 @@ namespace PHDS.core.Controllers
             return b;
         }
 
-        private bool CheckClockOut(GetMemberResult member, ClockType type, out List<string> errors)
+        private bool CheckClockOut(GetMemberResult member, Enum打卡类型 type, out List<string> errors)
         {
             var b = true;
             errors = new List<string>();
             var sType = "签退";
 
-            if (pinhuaContext.WeixinClockOptions.FirstOrDefault().Ip != HttpContext.Connection.RemoteIpAddress.ToString())
+            if (!pinhuaContext.IsInternalNetwork())
             {
-                errors.Add("非公司网络");
+                errors.Add($"你的IP地址为 {pinhuaContext.ClientIp()} ,非公司网络");
                 b = false;
             }
 
@@ -286,7 +288,7 @@ namespace PHDS.core.Controllers
                     b = false;
                 }
                 var r = from p in pinhuaContext.WeixinClock
-                        where member.userid == p.Userid && p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)ClockType.签退
+                        where member.userid == p.Userid && p.Clocktime.Value.IsBetween(t1, t2) && p.Clocktype == (int)Enum打卡类型.签退
                         select p;
                 if (r.Count() > 0)
                 {
@@ -298,7 +300,7 @@ namespace PHDS.core.Controllers
             return b;
         }
 
-        private bool InsertWeixinClock(ClockType type, GetMemberResult member)
+        private bool InsertWeixinClock(Enum打卡类型 type, GetMemberResult member)
         {
             var rtId = "144.1";
 
@@ -319,6 +321,7 @@ namespace PHDS.core.Controllers
                 ExcelServerRtid = rtId,
                 ExcelServerRcid = rcId,
                 ClockPlanId = pinhuaContext.GetCurrentClockRange().ExcelServerRcid,
+                ClockRangeId = pinhuaContext.GetCurrentClockRange().RangeId,
                 Clocktype = (int?)type,
                 Weixinid = member.weixinid,
                 Userid = member.userid,
@@ -338,23 +341,125 @@ namespace PHDS.core.Controllers
 
         private GetDepartmentListResult GetDepartmentList()
         {
-            var tokenResult = CommonApi.GetToken(wxOptions.CorpId, wxOptions.Secret);
+            var tokenResult = CommonApi.GetToken(WeixinOptions.CorpId, WeixinOptions.Secret);
             return MailListApi.GetDepartmentList(tokenResult.access_token);
         }
 
-        public IActionResult Top10()
+        public ClockComputeModel ComputeClockMonthReport(int year, int month)
         {
-            return View();
-        }
+            // 获取班段
+            var ranges = pinhuaContext.GetCurrentClockRanges();
+            // 获取区间内的所有打卡记录
+            var records = pinhuaContext.GetTargetMonthClockRecords(year, month);
+            // 打卡记录按人分组
+            var records分组 = from p in records
+                            group p by new { p.Userid, p.Name } into g
+                            select g;
+            // 开始计算
+            var ret = new ClockComputeModel
+            {
+                year = year,
+                month = month,
+                users = new List<ClockComputeUserModel>()
+            };
+            // 插入人员数据
+            foreach (var record in records分组)
+            {
+                ret.users.Add(new ClockComputeUserModel
+                {
+                    userid = record.Key.Userid,
+                    name = record.Key.Name,
+                    results = new List<ClockComputeResultModel>()
+                });
+            }
 
-        public IActionResult Declaration()
-        {
-            return View();
+            // 分日期计算打卡记录
+            foreach (var user in ret.users)
+            {
+                // 为每个成员添加日期
+                var days = DateTime.DaysInMonth(ret.year, ret.month);
+                for (int i = 0; i != days; i++)
+                {
+                    user.results.Add(new ClockComputeResultModel
+                    {
+                        date = new DateTime(year, month, i + 1),
+                        details = new List<ClockComputeDetailModel>()
+                    });
+                }
+                foreach (var pp in user.results)
+                {
+                    var userRecords = records分组.FirstOrDefault(x => x.Key.Userid == user.userid);
+                    foreach (var range in ranges)
+                    {
+                        var dt1 = DateTime.MaxValue;
+                        var dt2 = DateTime.MaxValue;
+                        var dt1fix = DateTime.MaxValue;
+                        var dt2fix = DateTime.MaxValue;
+                        // 获取签到签退时间
+                        foreach (var clock in userRecords)
+                        {
+                            if (clock.Clocktype == (int)Enum打卡类型.签到)
+                            {
+                                range.指定日期的签到区间(pp.date, out var subbegin, out var subend);
+                                if (clock.Clocktime.Value.IsBetween(subbegin, subend))
+                                {
+                                    dt1 = clock.Clocktime.Value;
+                                }
+                            }
+                            if (clock.Clocktype == (int)Enum打卡类型.签退)
+                            {
+                                range.指定日期的签退区间(pp.date, out var subbegin, out var subend);
+                                if (clock.Clocktime.Value.IsBetween(subbegin, subend))
+                                {
+                                    dt2 = clock.Clocktime.Value;
+                                }
+                            }
+                        }
+                        range.指定日期的工作时间区间(pp.date, out var worktime1, out var worktime2);
+
+                        if (dt1 < worktime1 && dt1 != DateTime.MaxValue)
+                            dt1fix = worktime1;
+                        else if (dt1 >= worktime1 && dt1 != DateTime.MaxValue)
+                            dt1fix = dt1;
+
+                        if (dt2 > worktime2 && dt2 != DateTime.MaxValue)
+                            if (range.延迟算加班 == "是")
+                                dt2fix = dt2;
+                            else
+                                dt2fix = worktime2;
+                        else if (dt2 <= worktime2 && dt2 != DateTime.MaxValue)
+                            dt2fix = dt2;
+                            
+                        var t = dt2fix.DropSeconds().Subtract(dt1fix.DropSeconds());
+                        var minutes = t.TotalMinutes > 0 && dt2fix != DateTime.MaxValue && dt1fix != DateTime.MaxValue ? Math.Floor(t.TotalMinutes) : 0;
+                        var hours = (minutes - minutes % 6) / 60;
+                        pp.details.Add(new ClockComputeDetailModel
+                        {
+                            hours = (decimal)hours,
+                            range = range.ToBorderRangeString(),
+                            time1 = dt1 == DateTime.MaxValue ? "" : dt1.ToShortTimeString(),
+                            time2 = dt2 == DateTime.MaxValue ? "" : dt2.ToShortTimeString(),
+                            time1fix = dt1fix == DateTime.MaxValue ? "" : dt1fix.ToShortTimeString(),
+                            time2fix = dt2fix == DateTime.MaxValue ? "" : dt2fix.ToShortTimeString(),
+                            state = (dt1 != DateTime.MaxValue && dt2 != DateTime.MaxValue) ? "正常" : "异常"
+                        });
+                        pp.totalHours += (decimal)hours;
+                    }
+                }
+            }
+
+            return ret;
         }
     }
-    public enum ClockType
+    public enum Enum打卡类型
     {
         签退,
         签到
+    }
+
+    public enum Enum异常说明类型
+    {
+        未签退,
+        未签到
     }
 }

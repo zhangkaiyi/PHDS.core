@@ -6,25 +6,22 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using Zky.Utility;
 
 namespace PHDS.core.Utility
 {
-    public static class HttpContext
-    {
-        public static IServiceProvider ServiceProvider;
-        public static Microsoft.AspNetCore.Http.HttpContext Current
-        {
-            get
-            {
-                object factory = ServiceProvider.GetService(typeof(Microsoft.AspNetCore.Http.IHttpContextAccessor));
-                Microsoft.AspNetCore.Http.HttpContext context = ((Microsoft.AspNetCore.Http.HttpContextAccessor)factory).HttpContext;
-                return context;
-            }
-        }
-    }
-
     public static class PinhuaContextExtensions
     {
+        public static string ClientIp(this PinhuaContext context)
+        {
+            var ip = HttpContext.Current.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')?.FirstOrDefault();
+            if (string.IsNullOrEmpty(ip))
+            {
+                ip = HttpContext.Current.Connection.RemoteIpAddress.ToString();
+            }
+            return ip;
+        }
+
         /// <summary>
         /// 判断是不是公司内部网络，公司网络信息在数据库中
         /// </summary>
@@ -32,8 +29,10 @@ namespace PHDS.core.Utility
         /// <returns></returns>
         public static bool IsInternalNetwork(this PinhuaContext context)
         {
-            var clockOptions = context.WeixinClockOptions.FirstOrDefault();
-            return HttpContext.Current.Connection.RemoteIpAddress.ToString() == clockOptions.Ip;
+
+            var ip1 = context.WeixinClockOptions.FirstOrDefault().Ip;
+            var ip2 = context.ClientIp();
+            return ip1.Equals(ip2);
         }
 
         /// <summary>
@@ -95,7 +94,7 @@ namespace PHDS.core.Utility
         /// <returns></returns>
         public static WeixinWorkPlan GetCurrentClockPlan(this PinhuaContext context)
         {
-            var plan = context.WeixinWorkPlan.Where(p => p.Id == 1).FirstOrDefault();
+            var plan = context.WeixinWorkPlan.AsNoTracking().Where(p => p.Id == 1).FirstOrDefault();
             return plan;
         }
 
@@ -109,7 +108,7 @@ namespace PHDS.core.Utility
             var plan = context.GetCurrentClockPlan();
             if (plan == null)
                 return null;
-            var ranges = context.WeixinWorkPlanDetail.Where(p => p.ExcelServerRcid == plan.ExcelServerRcid);
+            var ranges = context.WeixinWorkPlanDetail.AsNoTracking().Where(p => p.ExcelServerRcid == plan.ExcelServerRcid);
             return ranges.ToList();
         }
 
@@ -174,6 +173,30 @@ namespace PHDS.core.Utility
             return true;
         }
 
+        public static bool GetTargetMonthClockRangesBorder(this PinhuaContext context, int year, int month, out DateTime earliest, out DateTime latest)
+        {
+            var first = new DateTime(year, month, 1);
+            var last = first.AddMonths(1).AddDays(-1);
+            earliest = DateTime.MaxValue;
+            latest = DateTime.MinValue;
+
+            var ranges = context.GetCurrentClockRanges();
+            if (ranges == null)
+                return false;
+
+            foreach (var range in ranges)
+            {
+                var t1 = range.Beginning.Value.ConvertToTargetDate(first).AddMinutes(-range.MoveUp.Value);
+                if (t1 < earliest)
+                    earliest = t1;
+                var t2 = range.Ending.Value.ConvertToTargetDate(last).AddMinutes(range.PutOff.Value);
+                if (t2 > latest)
+                    latest = t2;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// 获取当天考勤记录集合
         /// </summary>
@@ -195,7 +218,21 @@ namespace PHDS.core.Utility
                 }
                 else
                 {
-                    foreach (var clockinfo in context.WeixinClock.Where(p => p.Userid == userid))
+                    var records1 = from p in context.WeixinClock
+                                   where p.Userid == userid
+                                   select p;
+                    var records2 = from p in context.Wx异常说明
+                                   where p.用户号 == userid && p.是否处理 == 1
+                                   select new WeixinClock
+                                   {
+                                       Clocktype = p.类型,
+                                       Clocktime = p.时间,
+                                       Name = p.姓名,
+                                       Userid = p.用户号,
+                                   };
+                    var records = records1.Union(records2).OrderBy(p => p.Clocktime);
+
+                    foreach (var clockinfo in records)
                     {
                         if (clockinfo.Clocktime.Value.IsBetween(earliest, latest))
                             result.Add(clockinfo);
@@ -211,17 +248,54 @@ namespace PHDS.core.Utility
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public static List<WeixinClock> GetTargetDateClockRecords(this PinhuaContext context, DateTime target, string userid)
+        public static List<WeixinClock> GetTargetDateTargetUserClockRecords(this PinhuaContext context, DateTime target, string userid)
         {
             var result = new List<WeixinClock>();
             var bret = context.GetTargetDateClockRangesBorder(target, out var earliest, out var latest);
             if (bret)
             {
-                foreach (var clockinfo in context.WeixinClock.Where(p => p.Userid == userid))
+                var records1 = from p in context.WeixinClock.AsNoTracking()
+                               where p.Userid == userid
+                               select p;
+                var records2 = from p in context.Wx异常说明.AsNoTracking()
+                               where p.用户号 == userid && p.是否处理 == 1
+                               select new WeixinClock
+                               {
+                                   Clocktype = p.类型,
+                                   Clocktime = p.时间,
+                                   Name = p.姓名,
+                                   Userid = p.用户号,
+                               };
+                var records = records1.ToList().Union(records2.ToList()).OrderBy(p => p.Clocktime);
+
+                foreach (var clockinfo in records)
                 {
                     if (clockinfo.Clocktime.Value.IsBetween(earliest, latest))
                         result.Add(clockinfo);
                 }
+            }
+            return result;
+        }
+
+        public static List<WeixinClock> GetTargetMonthClockRecords(this PinhuaContext context, int year, int month)
+        {
+            var result = new List<WeixinClock>();
+            var bret = context.GetTargetMonthClockRangesBorder(year, month, out var earliest, out var latest);
+            if (bret)
+            {
+                var records1 = from p in context.WeixinClock.AsNoTracking()
+                               where p.Clocktime.Value.IsBetween(earliest, latest)
+                               select p;
+                var records2 = from p in context.Wx异常说明.AsNoTracking()
+                               where p.时间.Value.IsBetween(earliest, latest) && p.是否处理 == 1
+                               select new WeixinClock
+                               {
+                                   Clocktype = p.类型,
+                                   Clocktime = p.时间,
+                                   Name = p.姓名,
+                                   Userid = p.用户号,
+                               };
+                result = records1.Union(records2).OrderBy(p => p.Clocktime).ToList();
             }
             return result;
         }
