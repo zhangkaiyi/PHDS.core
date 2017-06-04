@@ -12,6 +12,7 @@ using PHDS.core.Entities.Pinhua;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Http;
 using Zky.Utility;
+using PHDS.core.Utility;
 
 namespace PHDS.core
 {
@@ -42,8 +43,6 @@ namespace PHDS.core
             services.AddMvc();
             // 注入IOptions<WeixinOptions>
             services.AddOptions();
-            // 注入IHttpContextAccessor实现HttpContext.Current
-            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
         }
 
@@ -76,6 +75,8 @@ namespace PHDS.core
             });
 
             app.UseStaticHttpContext();
+
+            app.UseUtility();
         }
     }
 }

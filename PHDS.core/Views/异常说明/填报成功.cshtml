@@ -1,6 +1,6 @@
 ﻿@{
     Layout = "_Layout_weui";
-    ViewData["Title"] = "异常说明成功";
+    ViewData["Title"] = "填报成功";
 
 }
 
@@ -14,7 +14,7 @@
         <div class="weui-msg__opr-area">
             <p class="weui-btn-area">
                 <a href="@(Url.Action<异常说明Controller>(p => p.异常填报()))" class="weui-btn weui-btn_primary">继续填报</a>
-                <a href="@(Url.Action<WxClockController>(p => p.Index(null)))" class="weui-btn weui-btn_default">返回首页</a>
+                <a href="@(Url.Action<异常说明Controller>(p => p.Index()))" class="weui-btn weui-btn_default">返回首页</a>
             </p>
         </div>
         <div class="weui-msg__extra-area">

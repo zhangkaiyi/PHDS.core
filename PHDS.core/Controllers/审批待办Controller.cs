@@ -38,6 +38,8 @@ namespace PHDS.core.Controllers
                 return Redirect(OAuth2Api.GetCode(WeixinOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex", "STATE"));
 
             pinhuaContext.Wx异常说明.Where(p => p.ExcelServerRcid == model.ExcelServerRcid).FirstOrDefault().是否处理 = 1;
+            pinhuaContext.Wx异常说明.Where(p => p.ExcelServerRcid == model.ExcelServerRcid).FirstOrDefault().处理人 = memberResult.name;
+            pinhuaContext.Wx异常说明.Where(p => p.ExcelServerRcid == model.ExcelServerRcid).FirstOrDefault().处理时间 = DateTime.Now;
             pinhuaContext.SaveChanges();
 
             return RedirectToAction("Index", "WxClock", new { member = JsonConvert.SerializeObject(memberResult) });
@@ -54,6 +56,8 @@ namespace PHDS.core.Controllers
                 return Redirect(OAuth2Api.GetCode(WeixinOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex", "STATE"));
 
             pinhuaContext.Wx异常说明.Where(p => p.ExcelServerRcid == model.ExcelServerRcid).FirstOrDefault().是否处理 = 2;
+            pinhuaContext.Wx异常说明.Where(p => p.ExcelServerRcid == model.ExcelServerRcid).FirstOrDefault().处理人 = memberResult.name;
+            pinhuaContext.Wx异常说明.Where(p => p.ExcelServerRcid == model.ExcelServerRcid).FirstOrDefault().处理时间 = DateTime.Now;
             pinhuaContext.SaveChanges();
 
             return RedirectToAction("Index", "WxClock", new { member = JsonConvert.SerializeObject(memberResult) });

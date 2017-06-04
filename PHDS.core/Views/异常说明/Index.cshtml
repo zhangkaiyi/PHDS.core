@@ -1,0 +1,60 @@
+﻿@model Senparc.Weixin.QY.AdvancedAPIs.MailList.GetMemberResult
+@{
+    //Layout = "_Layout_weui";
+    ViewData["Title"] = "异常管理";
+
+    var x = from p in PinhuaContext.Wx异常说明.Where(p => p.用户号 == Model.userid).ToList()
+            group p by new { p.时间.Value.Year, p.时间.Value.Month } into g
+            select g;
+
+}
+
+<div class="" id="app">
+    <p></p>
+    <div class="btn-toolbar">
+        <div class="btn-group pull-right" role="group" aria-label="...">
+            <a href="@(Url.Action<WxClockController>(p => p.Index(null)))" class="btn btn-danger"><i class="fa fa-home"></i> 首页</a>
+        </div>
+        <div class="btn-group" role="group" aria-label="...">
+            <a href="@(Url.Action<异常说明Controller>(p => p.异常填报()))" class="btn btn-primary"><i class="fa fa-pencil"></i> 异常填报</a>
+            <button type="button" class="btn btn-default"><i class="fa fa-clock-o"></i> 历史</button>
+        </div>
+    </div>
+    <p></p>
+    <div>
+        @foreach (var item in x.OrderByDescending(p => p.Key.Year).ThenByDescending(p => p.Key.Month))
+        {
+            <div class="panel panel-primary">
+                <div class="panel-heading">@(item.Key.Year)年@(item.Key.Month)月</div>
+                <ul class="list-group">
+                    @foreach (var item2 in item)
+                    {
+                        <li class="list-group-item">
+                            <div style="display:table-row">
+                                <div style="font-size:16px;font-weight:600;display:table-cell;width:100%;vertical-align:middle">@item2.时间.Value.ToString("yyyy-MM-dd HH:mm") @(item2.类型 == 0 ? "未签退" : "未签到")</div>
+                                @if (item2.是否处理 == 1)
+                                {
+                                    <div style="display:table-cell;vertical-align:middle;"><img src="~/images/审核通过.png" style="height:40px" /></div>
+                                }
+                                else if (item2.是否处理 == 2)
+                                {
+                                    <div style="display:table-cell;vertical-align:middle;"><img src="~/images/审核未通过.png" style="height:40px" /></div>
+                                }
+                            </div>
+                            <div class="list-group-item-text" style="line-height:50px">
+                            </div>
+                            <p class="list-group-item-text"><span>异常原因</span><span class="pull-right">@item2.原因</span></p>
+                            <p class="list-group-item-text"><span>审核时间</span><span class="pull-right">@item2.处理时间</span></p>
+                            <p class="list-group-item-text"><span>审核人</span><span class="pull-right">@item2.处理人</span></p>
+                        </li>
+                    }
+                </ul>
+
+            </div>
+        }
+
+    </div>
+</div>
+@section Scripts{
+
+}

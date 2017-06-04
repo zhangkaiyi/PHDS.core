@@ -20,6 +20,8 @@ namespace PHDS.core.Entities.Pinhua
         public int? 是否通知 { get; set; }
         public int? 是否处理 { get; set; }
         public string 姓名 { get; set; }
-        public DateTime? 填报日期 { get; set; }
+        public DateTime? 填报时间 { get; set; }
+        public DateTime? 处理时间 { get; set; }
+        public string 处理人 { get; set; }
     }
 }

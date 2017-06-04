@@ -25,7 +25,11 @@ namespace PHDS.core.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            var memberResult = AppSessions.GetMember();
+            if (memberResult == null)
+                return Redirect(OAuth2Api.GetCode(WeixinOptions.CorpId, "wx.pinhuadashi.com%2Fwxclock%2Foauth%3Freturnurl%3D%252Fwxclock%252Findex", "STATE"));
+
+            return View(memberResult);
         }
         
         [HttpGet]
@@ -57,8 +61,8 @@ namespace PHDS.core.Controllers
             model.ExcelServerRcid = rcId;
             model.是否通知 = 0;
             model.是否处理 = 0;
-            model.填报日期 = DateTime.Now;
-
+            model.填报时间 = DateTime.Now;
+            
             var repCase = new EsRepCase
             {
                 RcId = rcId,

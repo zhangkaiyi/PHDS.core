@@ -28,5 +28,23 @@ namespace PHDS.core.Controllers
             return View();
         }
 
+        public IActionResult 考勤月报(int? year, int? month)
+        {
+            if (year.HasValue && month.HasValue)
+                return View(Utility.Reports.计算月报表(year.Value, month.Value));
+            return View();
+        }
+
+        [HttpPost,ActionName(nameof(考勤月报))]
+        public IActionResult 考勤月报_Post()
+        {
+            return View();
+        }
+
+        public void 计算日报表(int year, int month, int day)
+        {
+            
+        }
+
     }
 }

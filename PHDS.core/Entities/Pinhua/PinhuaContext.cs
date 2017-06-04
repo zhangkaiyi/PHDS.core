@@ -4572,7 +4572,11 @@ namespace PHDS.core.Entities.Pinhua
 
                 entity.Property(e => e.原因).HasMaxLength(500);
 
-                entity.Property(e => e.填报日期).HasColumnType("datetime");
+                entity.Property(e => e.填报时间).HasColumnType("datetime");
+
+                entity.Property(e => e.处理人).HasMaxLength(100);
+
+                entity.Property(e => e.处理时间).HasColumnType("datetime");
 
                 entity.Property(e => e.姓名).HasMaxLength(100);
 

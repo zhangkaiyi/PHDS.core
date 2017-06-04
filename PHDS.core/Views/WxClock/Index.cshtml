@@ -42,7 +42,7 @@
                         我的记录
                     </p>
                 </a>
-                <a href="@(Url.Action<异常说明Controller>(p=>p.异常填报()))" class="weui-grid js_grid">
+                <a href="@(Url.Action<异常说明Controller>(p=>p.Index()))" class="weui-grid js_grid">
                     <div class="weui-grid__icon">
                         <img src="~/lib/jquery-weui/demos/images/icon_nav_dialog.png" alt="">
                     </div>
@@ -58,20 +58,20 @@
                         请假申请
                     </p>
                 </a>
-                <a href="" class="weui-grid js_grid">
+                <a href="@(Url.Action<打卡记录Controller>(p => p.考勤月报(null,null)))" class="weui-grid js_grid">
                     <div class="weui-grid__icon">
                         <img src="~/lib/jquery-weui/demos/images/icon_nav_calendar.png" alt="">
                     </div>
                     <p class="weui-grid__label">
-                        我的排班
+                        @nameof(打卡记录Controller.考勤月报)
                     </p>
                 </a>
-                <a href="" class="weui-grid js_grid">
+                <a href="@(Url.Action<打卡记录Controller>(p => p.考勤月报(null,null)))" class="weui-grid js_grid">
                     <div class="weui-grid__icon">
-                        <img src="~/lib/jquery-weui/demos/images/icon_nav_msg.png" alt="">
+                        <img src="~/lib/jquery-weui/demos/images/icon_nav_toast.png" alt="">
                     </div>
                     <p class="weui-grid__label">
-                        当月统计
+                        工资计算
                     </p>
                 </a>
                 @if (AppSessions.GetMember()?.userid == "1")
@@ -81,7 +81,7 @@
                         <img src="~/lib/jquery-weui/demos/images/icon_nav_progress.png" alt="">
                     </div>
                     <p class="weui-grid__label">
-                        审批待办
+                        @nameof(审批待办Controller.待办审批)
                     </p>
                 </a>
                 }
